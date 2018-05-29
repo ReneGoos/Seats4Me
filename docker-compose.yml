@@ -1,0 +1,8 @@
+version: '3'
+
+services:
+  seats4me:
+    image: seats4me
+    build:
+      context: .
+      dockerfile: Seats4Me\Dockerfile
