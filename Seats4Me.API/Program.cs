@@ -7,8 +7,9 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Seats4Me.API;
 
-namespace Seats4Me
+namespace Seats4Me.API
 {
     public class Program
     {
