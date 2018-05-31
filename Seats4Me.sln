@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27428.2043
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{8E254ADB-2D21-4366-8516-9675BD56A86A}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{422B2075-B899-4E38-8E58-1EA420B3D06E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Seats4Me.API.Tests", "Tests\Saet4Me.API.Tests\Seats4Me.API.Tests.csproj", "{D714FDDB-53D1-4682-A226-AF1E1B0ED2FB}"
@@ -13,7 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Seats4Me.Data", "Seats4Me.D
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Seats4Me.API", "Seats4Me.API\Seats4Me.API.csproj", "{9C47A47C-75DF-49A8-B445-B77BD9AF0722}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Seats4Me.Data.Tests", "Tests\Seats4Me.Data.Tests\Seats4Me.Data.Tests.csproj", "{F3936C24-4685-467E-8B17-00612A77FA7C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Seats4Me.Data.Tests", "Tests\Seats4Me.Data.Tests\Seats4Me.Data.Tests.csproj", "{F3936C24-4685-467E-8B17-00612A77FA7C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,10 +19,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{8E254ADB-2D21-4366-8516-9675BD56A86A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8E254ADB-2D21-4366-8516-9675BD56A86A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8E254ADB-2D21-4366-8516-9675BD56A86A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8E254ADB-2D21-4366-8516-9675BD56A86A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D714FDDB-53D1-4682-A226-AF1E1B0ED2FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D714FDDB-53D1-4682-A226-AF1E1B0ED2FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D714FDDB-53D1-4682-A226-AF1E1B0ED2FB}.Release|Any CPU.ActiveCfg = Release|Any CPU

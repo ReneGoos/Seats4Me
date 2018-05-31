@@ -13,5 +13,8 @@ namespace Seats4Me.Data.Model
         }
 
         public DbSet<Show> Shows { get; set; }
+        public DbSet<TimeSlot> TimeSlots { get; set; }
+        public DbSet<TimeSlotSeat> TimeSlotSeats { get; set; }
+        public DbSet<Seat> Seats { get; set; }
     }
 }
