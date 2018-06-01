@@ -21,42 +21,52 @@ namespace Seats4Me.API.Controllers
 
         // GET api/onstage
         [HttpGet]
-        public async Task<IEnumerable<Show>> GetAsync()
+        public async Task<IActionResult> GetAsync()
         {
-            return await _repository.GetAsync();
+            return Ok(await _repository.GetAsync());
         }
 
         // GET api/onstage/5
         [HttpGet("{id}")]
-        public async Task<Show> GetAsync(int id)
+        public async Task<IActionResult> GetAsync(int id)
         {
-            return await _repository.GetAsync(id);
+            return Ok(await _repository.GetAsync(id));
         }
 
-        // GET api/onstage/5
+        // GET api/onstage/calendar
         [HttpGet("calendar")]
-        public async Task<IEnumerable<CalendarShows>> GetCalendarAsync()
+        public async Task<IActionResult> GetCalendarAsync()
         {
-            return await _repository.GetCalendarAsync();
+            return Ok(await _repository.GetCalendarAsync());
         }
 
         // POST api/onstage
         [HttpPost]
-        public async Task<int> PostAsync([FromBody]Show value)
+        public async Task<IActionResult> PostAsync([FromBody]Show value)
         {
-            return await _repository.AddAsync(value);
+            var result = await _repository.AddAsync(value);
+            if (result <= 0)
+                return BadRequest(_repository.LastErrorMessage);
+            return Ok(result);
         }
 
         // PUT api/onstage/5
         [HttpPut("{id}")]
-        public async Task PutAsync(int id, [FromBody]Show value)
+        public async Task<IActionResult> PutAsync(int id, [FromBody]Show value)
         {
+            value.ShowId = id;
+            if (!await _repository.UpdateAsync(value))
+                return BadRequest(_repository.LastErrorMessage);
+            return Ok();
         }
 
         // DELETE api/onstage/5
         [HttpDelete("{id}")]
-        public async Task DeleteAsync(int id)
+        public async Task<IActionResult> DeleteAsync(int id)
         {
+            if (!await _repository.DeleteAsync(id))
+                return BadRequest(_repository.LastErrorMessage);
+            return Ok();
         }
     }
 }

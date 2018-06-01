@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Newtonsoft.Json;
 
 namespace Seats4Me.Data.Model
 {
@@ -13,7 +14,9 @@ namespace Seats4Me.Data.Model
         public bool Paid { get; set; }
         public string CustomerEmail { get; set; }
 
-        public Seat Seat { get; set; }
-        public TimeSlot TimeSlot { get; set; }
+        [JsonIgnore]
+        public virtual Seat Seat { get; set; }
+        [JsonIgnore]
+        public virtual TimeSlot TimeSlot { get; set; }
     }
 }

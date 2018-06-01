@@ -7,7 +7,7 @@ using Xunit;
 
 namespace Seats4Me.Data.Tests
 {
-    public class ShowData
+    public class ShowDataModelTests
     {
         [Fact]
         public async Task AddNewShowReturnsShow()

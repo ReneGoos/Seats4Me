@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -9,18 +8,34 @@ using Seats4Me.Data.Model;
 
 namespace Seats4Me.API.Model
 {
-    public class ShowsRepository
+    public class ShowsRepository : TheatreRepository
     {
-        private TheatreContext _context;
-
-        public ShowsRepository(TheatreContext context)
+        public ShowsRepository(TheatreContext context) : base(context)
         {
-            _context = context;
         }
 
-        public async Task<IEnumerable<Show>> GetAsync()
+        public async Task<IEnumerable<TimeSlotShow>> GetAsync()
         {
-            return await _context.Shows.Include(s => s.TimeSlots).ToListAsync();
+            return await _context.Shows
+                                .Join(_context.TimeSlots,
+                                        s => s.ShowId,
+                                        t => t.ShowId,
+                                        (s,t) => new TimeSlotShow()
+                                        {
+                                            ShowId = s.ShowId,
+                                            TimeSlotId = t.TimeSlotId,
+                                            Name = s.Name,
+                                            Title = s.Title,
+                                            Description = s.Description,
+                                            RegularPrice = s.RegularPrice,
+                                            RegularDiscountPrice = s.RegularDiscountPrice,
+                                            PromoPrice = s.PromoPrice,
+                                            Start = t.Start,
+                                            Length = t.Length
+                                        }
+                                     )
+                                .OrderBy(s => s.Start)
+                                .ToListAsync();
         }
 
         public async Task<Show> GetAsync(int id)
@@ -31,20 +46,39 @@ namespace Seats4Me.API.Model
         public async Task<int> AddAsync(Show value)
         {
             var story = await _context.Shows.AddAsync(value);
-            await _context.SaveChangesAsync();
+            if (!await SaveChangesAsync())
+                return -1;
+
             return story.Entity.ShowId;
         }
 
+        public async Task<bool> UpdateAsync(Show value)
+        {
+            LastErrorMessage = "";
+            _context.Shows.Attach(value);
+            _context.Shows.Update(value);
+            return await SaveChangesAsync();
+        }
+
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var show = await _context.Shows.FindAsync(id);
+            if (show == null)
+            {
+                LastErrorMessage = string.Format("No record found to delete for '{0}'", id);
+                return false;
+            }
+
+            _context.Shows.Remove(show);
+            return await SaveChangesAsync();
+        }
         public async Task<IEnumerable<CalendarShows>> GetCalendarAsync()
         {
             return await _context.TimeSlots
                             .Select(t => new
                             {
-                                Week = CultureInfo.CurrentCulture.Calendar
-                                                    .GetWeekOfYear(t.Start,
-                                                                    CalendarWeekRule.FirstFourDayWeek,
-                                                                    DayOfWeek.Monday
-                                                                    ),
+                                t.Week,
                                 t.Start.Month,
                                 t.Start.Year
                             })
@@ -58,11 +92,7 @@ namespace Seats4Me.API.Model
                                             (t, s) =>
                                             new
                                             {
-                                                Week = CultureInfo.CurrentCulture.Calendar
-                                                        .GetWeekOfYear(t.Start,
-                                                                        CalendarWeekRule.FirstFourDayWeek,
-                                                                        DayOfWeek.Monday
-                                                                        ),
+                                                t.Week,
                                                 t.Start.Month,
                                                 t.Start.Year,
                                                 TimeSlot = t,
@@ -88,7 +118,7 @@ namespace Seats4Me.API.Model
                                              RegularDiscountPrice = ts.Show.RegularDiscountPrice,
                                              PromoPrice  = ts.Show.PromoPrice,
                                              Start = ts.TimeSlot.Start,
-                                             End = ts.TimeSlot.End
+                                             Length = ts.TimeSlot.Length
                                         })
                                 }
                                 ).ToListAsync();

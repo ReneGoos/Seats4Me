@@ -9,6 +9,7 @@ using Swashbuckle.AspNetCore.Swagger;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 
 namespace Seats4Me.API
 {
@@ -24,8 +25,20 @@ namespace Seats4Me.API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<TheatreContext>(b => b.UseInMemoryDatabase(new Guid().ToString()));
+            string conn = Configuration.GetConnectionString("Seats4MeConnection");
+            if (conn.Contains("%USERPROFILE%"))
+            {
+                var path = Configuration.GetSection("USERPROFILE").Value;
+                conn = conn.Replace("%USERPROFILE%", path);
+            }
+
+            services.AddDbContext<TheatreContext>(options =>
+                options.UseSqlServer(conn)
+                        .EnableSensitiveDataLogging());
+            
             services.AddTransient<ShowsRepository, ShowsRepository>();
+            services.AddTransient<TicketsRepository, TicketsRepository>();
+
             services.AddMvcCore()
                 .AddJsonFormatters()
                 .AddApiExplorer();
@@ -43,6 +56,8 @@ namespace Seats4Me.API
             {
                 app.UseDeveloperExceptionPage();
                 var context = serviceProvider.GetService<TheatreContext>();
+                context.Database.EnsureDeleted();
+                context.Database.EnsureCreated();
                 AddTestData(context);
             }
 
@@ -55,64 +70,68 @@ namespace Seats4Me.API
             app.UseMvc();
         }
 
-        private void AddTestData(TheatreContext context)
+        private static void AddTestData(TheatreContext context)
         {
+            if (context.Shows.Any())
+                return;
             context.Shows.Add(new Show()
             {
-                ShowId = 1,
-                Name = "Hamlet vs. Hamlet"
-            });
-            context.Shows.Add(new Show()
-            {
-                ShowId = 2,
-                Name = "Branden"
-            });
-
-            context.TimeSlots.AddRange(new List<TimeSlot>()
+                Name = "Twools, Scapino Ballet",
+                Title = "Twools",
+                Description = "TWOOLS is geen gewone dansvoorstelling, maar een opwindende high-speed choreografische achtbaan.",
+                RegularPrice = 27.50M,
+                RegularDiscountPrice = 15.0M,
+                TimeSlots = new List<TimeSlot>()
                 {
                     new TimeSlot()
                     {
-                        TimeSlotId = 1,
                         Start = Convert.ToDateTime("01-06-2018 20:00", CultureInfo.CurrentCulture),
-                        End =  Convert.ToDateTime("01-06-2018 22:00", CultureInfo.CurrentCulture),
-                        ShowId = 1
+                        Length = 2
                     },
                     new TimeSlot()
                     {
-                        TimeSlotId = 2,
                         Start = Convert.ToDateTime("02-06-2018 20:00", CultureInfo.CurrentCulture),
-                        End =  Convert.ToDateTime("02-06-2018 22:00", CultureInfo.CurrentCulture),
-                        ShowId = 1
+                        Length = 2
                     },
                     new TimeSlot()
                     {
-                        TimeSlotId = 3,
                         Start = Convert.ToDateTime("03-06-2018 14:00", CultureInfo.CurrentCulture),
-                        End =  Convert.ToDateTime("03-06-2018 16:00", CultureInfo.CurrentCulture),
-                        ShowId = 1
+                        Length = 2
                     },
                     new TimeSlot()
                     {
-                        TimeSlotId = 4,
                         Start = Convert.ToDateTime("03-06-2018 20:00", CultureInfo.CurrentCulture),
-                        End =  Convert.ToDateTime("03-06-2018 22:00", CultureInfo.CurrentCulture),
-                        ShowId = 1
-                    },
-                    new TimeSlot()
-                    {
-                        TimeSlotId = 5,
-                        Start = Convert.ToDateTime("08-06-2018 20:00", CultureInfo.CurrentCulture),
-                        End =  Convert.ToDateTime("08-06-2018 22:00", CultureInfo.CurrentCulture),
-                        ShowId = 2
-                    },
-                    new TimeSlot()
-                    {
-                        TimeSlotId = 6,
-                        Start = Convert.ToDateTime("09-06-2018 20:00", CultureInfo.CurrentCulture),
-                        End =  Convert.ToDateTime("09-06-2018 22:00", CultureInfo.CurrentCulture),
-                        ShowId = 2
+                        Length = 2
                     }
+                }
             });
+            context.Shows.Add(new Show()
+            {
+                Name = "Woef Side Story (8+), RO Theater",
+                Title = "Woef Side Story",
+                Description = "De familiehit Woef Side Story (8+) is een Romeo en Julia op z’n hondjes. De stoere straathond Toto en de bloedmooie rashond Marina zijn verliefd. Maar in een wereld waarin iedereen in hondenhokjes is ingedeeld, mag hun liefde niet bestaan. Is de liefde van Toto en Marina sterk genoeg?",
+                TimeSlots = new List<TimeSlot>()
+                {
+                    new TimeSlot()
+                    {
+                        Start = Convert.ToDateTime("08-06-2018 20:00", CultureInfo.CurrentCulture),
+                        Length =  1.5
+                    },
+                    new TimeSlot()
+                    {
+                        Start = Convert.ToDateTime("09-06-2018 20:00", CultureInfo.CurrentCulture),
+                        Length =  1.5
+                    }
+                }
+            });
+
+            for (var row = 1; row <= 15; row++)
+            for (var chair = 1; chair <= 6; chair++)
+                context.Seats.Add(new Seat()
+                {
+                    Row = row,
+                    Chair = chair
+                });
             context.SaveChanges();
         }
     }
