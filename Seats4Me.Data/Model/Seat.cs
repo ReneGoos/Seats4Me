@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Seats4Me.Data.Model
+﻿namespace Seats4Me.Data.Model
 {
     public class Seat
     {

@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Seats4Me.API.Data;
 using Seats4Me.API.Model;
+using Seats4Me.Data.Common;
 using Seats4Me.Data.Model;
 
 namespace Seats4Me.API.Controllers
@@ -12,7 +10,7 @@ namespace Seats4Me.API.Controllers
     [Route("api/[controller]")]
     public class OnStageController : Controller
     {
-        private ShowsRepository _repository;
+        private readonly ShowsRepository _repository;
 
         public OnStageController(ShowsRepository repository)
         {
@@ -33,40 +31,38 @@ namespace Seats4Me.API.Controllers
             return Ok(await _repository.GetAsync(id));
         }
 
-        // GET api/onstage/calendar
-        [HttpGet("calendar")]
-        public async Task<IActionResult> GetCalendarAsync()
+        // GET api/onstage/week
+        [HttpGet("week/{week:int}/{year:int}")]
+        public async Task<IActionResult> GetWeekAsync(int week, int year)
         {
-            return Ok(await _repository.GetCalendarAsync());
+            if (week < 1 || week > new DateTime(year, 12, 31).Week())
+                return BadRequest(string.Format("Invalid week number {0}", week));
+            return Ok(await _repository.GetOnPeriodAsync(week: week, year: year));
         }
 
-        // POST api/onstage
-        [HttpPost]
-        public async Task<IActionResult> PostAsync([FromBody]Show value)
+        // GET api/onstage/week
+        [HttpGet("month/{month:int}/{year:int}")]
+        public async Task<IActionResult> GetMonthAsync(int month, int year)
         {
-            var result = await _repository.AddAsync(value);
-            if (result <= 0)
-                return BadRequest(_repository.LastErrorMessage);
-            return Ok(result);
+            if (month < 1 || month > 12)
+                return BadRequest(string.Format("Invalid month {0}", month));
+            return Ok(await _repository.GetOnPeriodAsync(month: month, year: year));
         }
 
-        // PUT api/onstage/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutAsync(int id, [FromBody]Show value)
+        // GET api/onstage/week
+        [HttpGet("year/{year:int}")]
+        public async Task<IActionResult> GetYearAsync(int year)
         {
-            value.ShowId = id;
-            if (!await _repository.UpdateAsync(value))
-                return BadRequest(_repository.LastErrorMessage);
-            return Ok();
+            if (year < 1900)
+                return BadRequest(string.Format("Invalid year number {0}", year));
+            return Ok(await _repository.GetOnPeriodAsync(year: year));
         }
 
-        // DELETE api/onstage/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteAsync(int id)
+        // GET api/onstage/week
+        [HttpGet("promo")]
+        public async Task<IActionResult> GetPromoAsync()
         {
-            if (!await _repository.DeleteAsync(id))
-                return BadRequest(_repository.LastErrorMessage);
-            return Ok();
+            return Ok(await _repository.GetPromotionsAsync());
         }
     }
 }

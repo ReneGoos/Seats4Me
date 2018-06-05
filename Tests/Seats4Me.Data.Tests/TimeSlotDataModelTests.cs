@@ -1,7 +1,6 @@
 ﻿using Seats4Me.Data.Model;
 using System;
 using System.Globalization;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
@@ -20,8 +19,8 @@ namespace Seats4Me.Data.Tests
             //Act
             var timeSlotEntry = await context.TimeSlots.AddAsync(new TimeSlot()
                 {
-                    Start = Convert.ToDateTime("08-06-2018 20:00", CultureInfo.CurrentCulture),
-                    Length = 1.5
+                    Day = Convert.ToDateTime("08-06-2018 20:00", CultureInfo.CurrentCulture),
+                    Hours = 1.5
                 });
             await context.SaveChangesAsync();
             //Assert

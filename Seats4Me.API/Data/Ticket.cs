@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Seats4Me.Data.Model;
 
 namespace Seats4Me.API.Data
 {
@@ -23,6 +19,7 @@ namespace Seats4Me.API.Data
         public int TimeSlotSeatId { get; set; }
         public bool Reserved { get; set; }
         public bool Paid { get; set; }
+        public decimal Price { get; set; }
         public string CustomerEmail { get; set; }
     }
 }

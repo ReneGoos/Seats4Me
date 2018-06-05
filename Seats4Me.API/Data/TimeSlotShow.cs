@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Seats4Me.API.Data
 {
@@ -15,7 +12,8 @@ namespace Seats4Me.API.Data
         public decimal RegularPrice { get; set; }
         public decimal RegularDiscountPrice { get; set; }
         public decimal PromoPrice { get; set; }
-        public DateTime Start { get; set; }
-        public double Length { get; set; }
+        public DateTime Day { get; set; }
+        public double Hours { get; set; }
+        public bool SoldOut { get; set; }
     }
 }

@@ -8,7 +8,6 @@ using Seats4Me.Data.Model;
 using Swashbuckle.AspNetCore.Swagger;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 
 namespace Seats4Me.API
@@ -74,6 +73,10 @@ namespace Seats4Me.API
         {
             if (context.Shows.Any())
                 return;
+
+            var today = DateTime.Today;
+            var dateTimeEvening = new DateTime(today.Year, today.Month, today.Day, 20, 0, 0);
+            var dateTimeAfternoon = new DateTime(today.Year, today.Month, today.Day, 14, 30, 0);
             context.Shows.Add(new Show()
             {
                 Name = "Twools, Scapino Ballet",
@@ -85,23 +88,23 @@ namespace Seats4Me.API
                 {
                     new TimeSlot()
                     {
-                        Start = Convert.ToDateTime("01-06-2018 20:00", CultureInfo.CurrentCulture),
-                        Length = 2
+                        Day = dateTimeEvening,
+                        Hours = 2
                     },
                     new TimeSlot()
                     {
-                        Start = Convert.ToDateTime("02-06-2018 20:00", CultureInfo.CurrentCulture),
-                        Length = 2
+                        Day = dateTimeEvening.AddDays(1),
+                        Hours = 2
                     },
                     new TimeSlot()
                     {
-                        Start = Convert.ToDateTime("03-06-2018 14:00", CultureInfo.CurrentCulture),
-                        Length = 2
+                        Day = dateTimeEvening.AddDays(2),
+                        Hours = 2
                     },
                     new TimeSlot()
                     {
-                        Start = Convert.ToDateTime("03-06-2018 20:00", CultureInfo.CurrentCulture),
-                        Length = 2
+                        Day = dateTimeAfternoon.AddDays(5),
+                        Hours = 2
                     }
                 }
             });
@@ -114,13 +117,13 @@ namespace Seats4Me.API
                 {
                     new TimeSlot()
                     {
-                        Start = Convert.ToDateTime("08-06-2018 20:00", CultureInfo.CurrentCulture),
-                        Length =  1.5
+                        Day =dateTimeEvening.AddDays(8),
+                        Hours =  1.5
                     },
                     new TimeSlot()
                     {
-                        Start = Convert.ToDateTime("09-06-2018 20:00", CultureInfo.CurrentCulture),
-                        Length =  1.5
+                        Day = dateTimeEvening.AddDays(10),
+                        Hours =  1.5
                     }
                 }
             });

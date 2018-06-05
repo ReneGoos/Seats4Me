@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace Seats4Me.Data.Model
 {
@@ -12,7 +10,6 @@ namespace Seats4Me.Data.Model
         public string Description { get; set; }
         public decimal RegularPrice { get; set; }
         public decimal RegularDiscountPrice { get; set; }
-        public decimal PromoPrice { get; set; }
 
         public ICollection<TimeSlot> TimeSlots { get; set;  }
     }

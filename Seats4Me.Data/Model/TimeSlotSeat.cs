@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
 namespace Seats4Me.Data.Model
 {
@@ -12,6 +9,7 @@ namespace Seats4Me.Data.Model
         public int TimeSlotId { get; set; }
         public bool Reserved { get; set; }
         public bool Paid { get; set; }
+        public decimal Price { get; set; }
         public string CustomerEmail { get; set; }
 
         [JsonIgnore]

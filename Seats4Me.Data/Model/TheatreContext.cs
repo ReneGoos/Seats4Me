@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Seats4Me.Data.Model
 {
@@ -46,7 +43,7 @@ namespace Seats4Me.Data.Model
                 .HasKey(s => s.TimeSlotId);
 
             modelBuilder.Entity<TimeSlot>()
-                .Property(s => s.Start)
+                .Property(s => s.Day)
                 .IsRequired();
 
             modelBuilder.Entity<TimeSlot>()

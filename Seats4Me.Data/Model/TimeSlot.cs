@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Text;
 using Newtonsoft.Json;
+using Seats4Me.Data.Common;
 
 namespace Seats4Me.Data.Model
 {
@@ -11,24 +10,21 @@ namespace Seats4Me.Data.Model
         private DateTime _startDateTime;
 
         public int TimeSlotId { get; set; }
-        public DateTime Start
+        public DateTime Day
         {
             get => _startDateTime;
             set
             {
-                Week = CultureInfo.CurrentCulture.Calendar
-                    .GetWeekOfYear(value,
-                        CalendarWeekRule.FirstFourDayWeek,
-                        DayOfWeek.Monday
-                    );
+                Week = value.Week();
                 _startDateTime = value;
             }
         }
 
-        public double Length { get; set; }
+        public double Hours { get; set; }
         public int ShowId { get; set; }
         public int Week { get; private set; }
-    
+        public decimal PromoPrice { get; set; }
+
         [JsonIgnore]
         public virtual Show Show { get; set; }
         public virtual ICollection<TimeSlotSeat> TimeSlotSeats { get; set; }

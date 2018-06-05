@@ -16,17 +16,18 @@ namespace Seats4Me.API.Tests
         public async Task ListShowsByWeek()
         {
             //Arrange
-            var context = TheatreContextInit.InitializeContextInMemoryDb();
+            var context = TheatreContextInit.InitializeContextInMemoryDb(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.GUID.ToString());
             var show = context.Shows.Add(
                     new Show()
                     {
                         Name = "Hamlet vs Hamlet",
+                        RegularPrice = 12,
                         TimeSlots = new List<TimeSlot>()
                         {
                             new TimeSlot()
                             {
-                                Start = Convert.ToDateTime("31-05-2018 20:00", CultureInfo.CurrentCulture),
-                                Length =  2
+                                Day = Convert.ToDateTime("31-05-2018 20:00", CultureInfo.CurrentCulture),
+                                Hours =  2
                             }
                         }
                     });
@@ -46,6 +47,7 @@ namespace Seats4Me.API.Tests
                 Paid = true,
                 CustomerEmail = "test@test.nl",
                 Reserved = false,
+                Price = show.Entity.RegularPrice,
                 SeatId = seat.Entity.SeatId,
                 TimeSlotId = show.Entity.TimeSlots.First().TimeSlotId
             });
