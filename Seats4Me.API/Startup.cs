@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,13 +10,24 @@ using Swashbuckle.AspNetCore.Swagger;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Seats4Me.API
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        private readonly IHostingEnvironment _env;
+
+        public Startup(IConfiguration configuration, IHostingEnvironment env)
         {
+            _env = env;
             Configuration = configuration;
         }
 
@@ -37,14 +49,89 @@ namespace Seats4Me.API
             
             services.AddTransient<ShowsRepository, ShowsRepository>();
             services.AddTransient<TicketsRepository, TicketsRepository>();
+            services.AddTransient<TimeSlotsRepository, TimeSlotsRepository>();
+            services.AddTransient<UsersRepository, UsersRepository>();
+
+            SecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Signing:Key"]));
+
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(
+                    options =>
+                    {
+                        options.TokenValidationParameters =
+                            new TokenValidationParameters()
+                            {
+                                ValidateIssuerSigningKey = true,
+                                IssuerSigningKey = key,
+
+                                ValidateIssuer = true,
+                                ValidIssuer = Configuration["Signing:Issuer"],
+
+                                ValidateAudience = true,
+                                ValidAudience = Configuration["Signing:Audience"],
+
+                                ValidateLifetime = true,
+
+                                ClockSkew = TimeSpan.Zero
+                            };
+                    });
+
+            /*
+            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(options =>
+                {
+                    options.Events.OnRedirectToLogin += OnRedirectToLogin,
+                    options.LoginPath = "/Account/LogIn";
+                    options.LogoutPath = "/Account/LogOff";
+                });
+                */
+            /*
+            var builder = services.AddIdentityCore<Seats4MeUser>(opt =>
+                {
+                    opt.Password.RequireDigit = true;
+                    opt.Password.RequiredLength = 8;
+                    opt.Password.RequireNonAlphanumeric = false;
+                    opt.Password.RequireUppercase = true;
+                    opt.Password.RequireLowercase = true;
+                }
+            );
+            builder = new IdentityBuilder(builder.UserType, typeof(IdentityRole), builder.Services);
+            builder
+
+            builder.AddRoleValidator<RoleValidator<IdentityRole>>();
+            builder.AddRoleManager<RoleManager<IdentityRole>>();
+            builder.AddSignInManager<SignInManager<IdentityUser>>();
+            */
+
+            services.AddAuthorization(cfg =>
+            {
+                cfg.AddPolicy("Administrator", p => p.RequireClaim("Administrator", "True"));
+                cfg.AddPolicy("Customer", p => p.RequireClaim("Customer", "True"));
+            });
 
             services.AddMvcCore()
+                .AddAuthorization()
                 .AddJsonFormatters()
                 .AddApiExplorer();
 
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new Info { Title = "TheatreAPI", Version = "v1" });
+
+                // Swagger 2.+ support
+                var security = new Dictionary<string, IEnumerable<string>>
+                {
+                    {"Bearer", new string[] { }},
+                };
+
+                c.AddSecurityDefinition("Bearer", new ApiKeyScheme
+                {
+                    Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+                    Name = "Authorization",
+                    In = "header",
+                    Type = "apiKey"
+                });
+                c.AddSecurityRequirement(security);
             });
         }
 
@@ -64,7 +151,12 @@ namespace Seats4Me.API
             app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "TheatreAPI V1");
+
+                c.DocumentTitle = "Title Documentation";
+                c.DocExpansion(DocExpansion.None);
             });
+
+            app.UseAuthentication();
 
             app.UseMvc();
         }
@@ -73,6 +165,40 @@ namespace Seats4Me.API
         {
             if (context.Shows.Any())
                 return;
+
+            context.Seats4MeUsers.AddRange(
+                new List<Seats4MeUser>()
+                {
+                    new Seats4MeUser()
+                    {
+                        Email = "admin@seats4me.com",
+                        Name = "Admin",
+                        Roles = "administrator,customer",
+                        Password = "password"
+                    },
+                    new Seats4MeUser()
+                    {
+                        Email = "rene.goossens@glencore.com",
+                        Name = "René Goossens",
+                        Roles = "customer",
+                        Password = "password"
+                    },
+                    new Seats4MeUser()
+                    {
+                        Email = "guest@seats4me.com",
+                        Name = "Guest",
+                        Roles = "guest",
+                        Password = "password"
+                    },
+
+                    new Seats4MeUser()
+                    {
+                        Email = "rene@seats4me.com",
+                        Name = "René",
+                        Roles = "customer",
+                        Password = "password"
+                    }
+                });
 
             var today = DateTime.Today;
             var dateTimeEvening = new DateTime(today.Year, today.Month, today.Day, 20, 0, 0);
@@ -135,6 +261,24 @@ namespace Seats4Me.API
                     Row = row,
                     Chair = chair
                 });
+            context.SaveChanges();
+
+            var seat = context.Seats.FirstOrDefault(s => s.Row == 1 && s.Chair == 1);
+            var timeSlot = context.TimeSlots.FirstOrDefault(ts => ts.Day == dateTimeEvening);
+            var user = context.Seats4MeUsers.FirstOrDefault(u => u.Email.Equals("rene@seats4me.com"));
+
+            if (seat != null && timeSlot != null)
+            {
+                context.TimeSlotSeats.Add(new TimeSlotSeat()
+                {
+                    SeatId = seat.Id,
+                    TimeSlotId = timeSlot.Id,
+                    Seats4MeUserId = user.Id,
+                    Paid = true,
+                    Price = 15
+                });
+            }
+
             context.SaveChanges();
         }
     }

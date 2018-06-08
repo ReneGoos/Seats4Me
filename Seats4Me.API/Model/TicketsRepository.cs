@@ -14,13 +14,13 @@ namespace Seats4Me.API.Model
         {
         }
 
-        public async Task<IEnumerable<Ticket>> GetAsync(int timeslotId)
+        public async Task<IEnumerable<Ticket>> GetAsync(int timeSlotId)
         {
             var timeSlot = await _context.TimeSlots.Include(t => t.Show)
-                .FirstOrDefaultAsync(s => s.TimeSlotId == timeslotId);
+                .FirstOrDefaultAsync(s => s.Id == timeSlotId);
             return await _context.Seats
-                .GroupJoin(_context.TimeSlotSeats.Where(a => a.TimeSlotId == timeslotId),
-                    s => s.SeatId,
+                .GroupJoin(_context.TimeSlotSeats.Where(a => a.TimeSlotId == timeSlotId),
+                    s => s.Id,
                     t => t.SeatId,
                     (s, t) => new
                     {
@@ -38,25 +38,36 @@ namespace Seats4Me.API.Model
                 )
                 .Select(s => new Ticket()
                     {
-                        ShowId = timeSlot.Show.ShowId,
+                        ShowId = timeSlot.Show.Id,
                         Name = timeSlot.Show.Name,
                         Title = timeSlot.Show.Title,
                         Description = timeSlot.Show.Description,
                         RegularPrice = timeSlot.Show.RegularPrice,
                         RegularDiscountPrice = timeSlot.Show.RegularDiscountPrice,
                         PromoPrice = timeSlot.PromoPrice,
-                        SeatId = s.s.SeatId,
+                        SeatId = s.s.Id,
                         Row = s.s.Row,
                         Chair = s.s.Chair,
-                        TimeSlotId = timeSlot.TimeSlotId,
+                        TimeSlotId = timeSlot.Id,
                         Start = timeSlot.Day,
-                        TimeSlotSeatId = s.t == null ? -1 : s.t.TimeSlotSeatId,
+                        TimeSlotSeatId = s.t == null ? -1 : s.t.Id,
                         Reserved = s.t != null && s.t.Reserved,
                         Paid = s.t != null && s.t.Paid,
-                        CustomerEmail = s.t == null ? null : s.t.CustomerEmail
+                        Email = s.t == null ? null : _context.Seats4MeUsers.FirstOrDefault(u => u.Id == s.t.Seats4MeUserId).Email
                     }
                 )
                 .ToListAsync();
+        }
+
+        public bool ValidTicketUser(int timeSlotSeatId, string email)
+        {
+            var ticket = _context.TimeSlotSeats.Include(t => t.Seats4MeUser).First(t => t.Id == timeSlotSeatId);
+            if (ticket == null || !ticket.Seats4MeUser.Email.Equals(email))
+            {
+                LastErrorMessage = "Invalid ticket for this user!";
+                return false;
+            }
+            return true;
         }
 
         public async Task<int> AddAsync(Ticket value)
@@ -76,7 +87,7 @@ namespace Seats4Me.API.Model
             var show = await _context.TimeSlots
                 .Include(s => s.Show)
                 .FirstOrDefaultAsync(s =>
-                    s.TimeSlotId == value.TimeSlotId && (s.Show.RegularPrice == value.Price ||
+                    s.Id == value.TimeSlotId && (s.Show.RegularPrice == value.Price ||
                                                          s.Show.RegularDiscountPrice == value.Price ||
                                                          s.PromoPrice == value.Price));
             if (show == null)
@@ -85,10 +96,17 @@ namespace Seats4Me.API.Model
                 return -1;
             }
 
-            var timeslotSeat = await _context.TimeSlotSeats.AddAsync(
+            var seats4MeUser = await _context.Seats4MeUsers.FirstOrDefaultAsync(u => u.Email.Equals(value.Email));
+            if (seats4MeUser == null)
+            {
+                LastErrorMessage = "User not found";
+                return -1;
+            }
+
+            var timeSlotSeat = await _context.TimeSlotSeats.AddAsync(
                 new TimeSlotSeat()
                 {
-                    CustomerEmail = value.CustomerEmail,
+                    Seats4MeUserId = seats4MeUser.Id,
                     Paid = value.Paid,
                     Reserved = value.Reserved,
                     SeatId = value.SeatId,
@@ -98,7 +116,7 @@ namespace Seats4Me.API.Model
             if (!await SaveChangesAsync())
                 return -1;
 
-            return timeslotSeat.Entity.TimeSlotSeatId;
+            return timeSlotSeat.Entity.Id;
         }
 
         public async Task<bool> UpdateAsync(Ticket value)
@@ -108,8 +126,7 @@ namespace Seats4Me.API.Model
                 return await DeleteAsync(value.TimeSlotSeatId);
             }
 
-            var timeSlotSeat = _context.TimeSlotSeats.First(ts => ts.TimeSlotSeatId == value.TimeSlotSeatId);
-            timeSlotSeat.CustomerEmail = value.CustomerEmail;
+            var timeSlotSeat = _context.TimeSlotSeats.First(ts => ts.Id == value.TimeSlotSeatId);
             timeSlotSeat.Paid = value.Paid;
             timeSlotSeat.Reserved = value.Reserved;
             timeSlotSeat.SeatId = value.SeatId;
@@ -119,25 +136,25 @@ namespace Seats4Me.API.Model
             return await SaveChangesAsync();
         }
 
-        public async Task<bool> DeleteAsync(int timeslotSeatId)
+        public async Task<bool> DeleteAsync(int timeSlotSeatId)
         {
-            var timeSlotSeat = await _context.TimeSlotSeats.FindAsync(timeslotSeatId);
+            var timeSlotSeat = await _context.TimeSlotSeats.FindAsync(timeSlotSeatId);
             if (timeSlotSeat == null)
             {
-                LastErrorMessage = String.Format("No record found to delete for '{0}'", timeslotSeatId);
+                LastErrorMessage = $"No record found to delete for '{timeSlotSeatId}'";
                 return false;
             }
 
             _context.TimeSlotSeats.Remove(timeSlotSeat);
             return await SaveChangesAsync();
         }
-        public async Task<IEnumerable<Ticket>> GetFreeSeats(int timeslotId)
+        public async Task<IEnumerable<Ticket>> GetFreeSeats(int timeSlotId)
         {
             var timeSlot = await _context.TimeSlots.Include(t => t.Show)
-                .FirstOrDefaultAsync(s => s.TimeSlotId == timeslotId);
+                .FirstOrDefaultAsync(s => s.Id == timeSlotId);
             return await _context.Seats
-                .GroupJoin(_context.TimeSlotSeats.Where(a => a.TimeSlotId == timeslotId),
-                    s => s.SeatId,
+                .GroupJoin(_context.TimeSlotSeats.Where(a => a.TimeSlotId == timeSlotId),
+                    s => s.Id,
                     t => t.SeatId,
                     (s, t) => new
                     {
@@ -156,22 +173,22 @@ namespace Seats4Me.API.Model
                 .Where(s => s.t == null)
                 .Select(s => new Ticket()
                     {
-                        ShowId = timeSlot.Show.ShowId,
+                        ShowId = timeSlot.Show.Id,
                         Name = timeSlot.Show.Name,
                         Title = timeSlot.Show.Title,
                         Description = timeSlot.Show.Description,
                         RegularPrice = timeSlot.Show.RegularPrice,
                         RegularDiscountPrice = timeSlot.Show.RegularDiscountPrice,
                         PromoPrice = timeSlot.PromoPrice,
-                        SeatId = s.s.SeatId,
+                        SeatId = s.s.Id,
                         Row = s.s.Row,
                         Chair = s.s.Chair,
-                        TimeSlotId = timeSlot.TimeSlotId,
+                        TimeSlotId = timeSlot.Id,
                         Start = timeSlot.Day,
                         TimeSlotSeatId = -1,
                         Reserved = false,
                         Paid = false,
-                        CustomerEmail = null
+                        Email = null
                     }
                 )
                 .ToListAsync();
@@ -180,29 +197,30 @@ namespace Seats4Me.API.Model
         public async Task<IEnumerable<Ticket>> GetMyTicketsAsync(string email)
         {
             return await _context.TimeSlotSeats
+                                .Include(ts => ts.Seats4MeUser)
                                 .Include(ts => ts.Seat)
                                 .Include(ts => ts.TimeSlot)
                                 .ThenInclude(s => s.Show)
-                                .Where(ts => ts.CustomerEmail.Equals(email))
+                                .Where(ts => ts.Seats4MeUser.Email.Equals(email))
                                 .Select(s => new Ticket()
                                     {
-                                        ShowId = s.TimeSlot.Show.ShowId,
+                                        ShowId = s.TimeSlot.Show.Id,
                                         Name = s.TimeSlot.Show.Name,
                                         Title = s.TimeSlot.Show.Title,
                                         Description = s.TimeSlot.Show.Description,
                                         RegularPrice = s.TimeSlot.Show.RegularPrice,
                                         RegularDiscountPrice = s.TimeSlot.Show.RegularDiscountPrice,
                                         PromoPrice = s.TimeSlot.PromoPrice,
-                                        SeatId = s.Seat.SeatId,
+                                        SeatId = s.Seat.Id,
                                         Row = s.Seat.Row,
                                         Chair = s.Seat.Chair,
-                                        TimeSlotId = s.TimeSlot.TimeSlotId,
+                                        TimeSlotId = s.TimeSlot.Id,
                                         Start = s.TimeSlot.Day,
-                                        TimeSlotSeatId = s.TimeSlotSeatId,
+                                        TimeSlotSeatId = s.Id,
                                         Reserved = s.Reserved,
                                         Paid = s.Paid,
-                                        CustomerEmail = s.CustomerEmail
-                                    }
+                                        Email = s.Seats4MeUser.Email
+                                }
                                 )
                                 .ToListAsync();
         }

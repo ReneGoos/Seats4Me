@@ -1,4 +1,7 @@
-﻿using System.Threading.Tasks;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Seats4Me.API.Data;
 using Seats4Me.API.Model;
@@ -16,46 +19,64 @@ namespace Seats4Me.API.Controllers
         }
 
         // GET: api/tickets/5
-        [HttpGet("{timeslotId}")]
-        public async Task<IActionResult> GetAsync(int timeslotId)
+        [HttpGet("{timeSlotId}")]
+        public async Task<IActionResult> GetAsync(int timeSlotId)
         {
-            return Ok(await _repository.GetAsync(timeslotId));
+            return Ok(await _repository.GetAsync(timeSlotId));
         }
 
         // GET: api/tickets/email@email.com
-        [HttpGet("my/{email:alpha}")]
-        public async Task<IActionResult> GetAsync(string email)
+        [Authorize(Policy="Customer")]
+        [HttpGet]
+        public async Task<IActionResult> GetAsync()
         {
+            var email = User.Claims.First(c => c.Type.Equals(JwtRegisteredClaimNames.Email)).Value;
             return Ok(await _repository.GetMyTicketsAsync(email));
         }
 
         // POST: api/tickets
+        [Authorize(Policy = "Customer")]
         [HttpPost]
         public async Task<IActionResult> PostAsync([FromBody]Ticket value)
         {
-            var timeslotId = await _repository.AddAsync(value);
-            if (timeslotId <= 0)
+            var email = User.Claims.First(c => c.Type.Equals(JwtRegisteredClaimNames.Email)).Value;
+            if (!value.Email.Equals(email))
                 return BadRequest(_repository.LastErrorMessage);
-            return Ok(timeslotId);
+
+            var timeSlotSeatId = await _repository.AddAsync(value);
+            if (timeSlotSeatId <= 0)
+                return BadRequest(_repository.LastErrorMessage);
+            return Ok(timeSlotSeatId);
         }
-        
+
         // PUT: api/tickets/5
-        [HttpPut("{timeslotId}")]
-        public async Task<IActionResult> PutAsync(int timeslotId, [FromBody]Ticket value)
+        [Authorize(Policy = "Customer")]
+        [HttpPut("{timeSlotId}")]
+        public async Task<IActionResult> PutAsync(int timeSlotSeatId, [FromBody]Ticket value)
         {
-            value.TimeSlotId = timeslotId;
+            var email = User.Claims.First(c => c.Type.Equals(JwtRegisteredClaimNames.Email)).Value;
+            if (!_repository.ValidTicketUser(timeSlotSeatId, email))
+                return BadRequest(_repository.LastErrorMessage);
+
+            value.TimeSlotSeatId = timeSlotSeatId;
             if (!await _repository.UpdateAsync(value))
                 return BadRequest(_repository.LastErrorMessage);
             return Ok();
         }
 
         // DELETE: api/ApiWithActions/5
-        [HttpDelete("{timeslotId}")]
-        public async Task<IActionResult> DeleteAsync(int timeslotId)
+        [Authorize(Policy = "Customer")]
+        [HttpDelete("{timeSlotId}")]
+        public async Task<IActionResult> DeleteAsync(int timeSlotSeatId)
         {
-            if (!await _repository.DeleteAsync(timeslotId))
+            var email = User.Claims.First(c => c.Type.Equals(JwtRegisteredClaimNames.Email)).Value;
+            if (!_repository.ValidTicketUser(timeSlotSeatId, email))
+                return BadRequest(_repository.LastErrorMessage);
+
+            if (!await _repository.DeleteAsync(timeSlotSeatId))
                 return BadRequest(_repository.LastErrorMessage);
             return Ok();
         }
     }
 }
+

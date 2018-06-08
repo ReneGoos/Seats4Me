@@ -22,7 +22,7 @@ namespace Seats4Me.API.Model
             if (!await SaveChangesAsync())
                 return -1;
 
-            return timeSlot.Entity.TimeSlotId;
+            return timeSlot.Entity.Id;
         }
 
         public async Task<bool> UpdateAsync(TimeSlot value)
@@ -39,7 +39,7 @@ namespace Seats4Me.API.Model
             var timeSlot = await _context.TimeSlots.FindAsync(timeSlotId);
             if (timeSlot == null)
             {
-                LastErrorMessage = string.Format("No record found to delete for '{0}'", timeSlotId);
+                LastErrorMessage = $"No record found to delete for '{timeSlotId}'";
                 return false;
             }
 

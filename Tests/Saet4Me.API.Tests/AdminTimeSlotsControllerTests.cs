@@ -24,7 +24,7 @@ namespace Seats4Me.API.Tests
             });
             await context.SaveChangesAsync();
 
-            var showId = show.Entity.ShowId;
+            var showId = show.Entity.Id;
             var timeSlotsRepository = new TimeSlotsRepository(context);
             var timeSlots = new Controllers.AdminTimeSlotController(timeSlotsRepository);
             //Act
@@ -51,7 +51,7 @@ namespace Seats4Me.API.Tests
                 Name = "De Woef side story"
             });
             await context.SaveChangesAsync();
-            var showId = show.Entity.ShowId;
+            var showId = show.Entity.Id;
             var timeSlot = await context.TimeSlots.AddAsync(new TimeSlot()
             {
                 Day = Convert.ToDateTime("01-06-2018 14:00", CultureInfo.CurrentCulture),
@@ -59,7 +59,7 @@ namespace Seats4Me.API.Tests
                 ShowId = showId
             });
             await context.SaveChangesAsync();
-            var id = timeSlot.Entity.TimeSlotId;
+            var id = timeSlot.Entity.Id;
             var timeSlotsRepository = new TimeSlotsRepository(context);
             var timeSlots = new Controllers.AdminTimeSlotController(timeSlotsRepository);
             //Act

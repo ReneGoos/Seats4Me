@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Seats4Me.API.Model;
@@ -9,7 +10,8 @@ using Seats4Me.Data.Model;
 
 namespace Seats4Me.API.Controllers
 {
-    [Route("api/admin/timeslot")]
+    [Route("api/admin/timeSlot")]
+    [Authorize(Policy = "Administrator")]
     public class AdminTimeSlotController : Controller
     {
         private readonly TimeSlotsRepository _repository;
@@ -33,7 +35,7 @@ namespace Seats4Me.API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutAsync(int id, [FromBody]TimeSlot value)
         {
-            value.TimeSlotId = id;
+            value.Id = id;
             if (!await _repository.UpdateAsync(value))
                 return BadRequest(_repository.LastErrorMessage);
             return Ok();

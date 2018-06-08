@@ -38,6 +38,12 @@ namespace Seats4Me.API.Tests
                     Row = 1,
                     Chair = 1
                 });
+            var user = context.Seats4MeUsers.Add(new Seats4MeUser()
+            {
+                Name = "René",
+                Email = "rene@seats4me.com"
+
+            });
             await context.SaveChangesAsync();
 
             var ticketsRepository = new TicketsRepository(context);
@@ -45,11 +51,11 @@ namespace Seats4Me.API.Tests
             var timeSlotSeatId = await ticketsRepository.AddAsync(new Ticket()
             {
                 Paid = true,
-                CustomerEmail = "test@test.nl",
+                Email = user.Entity.Email,
                 Reserved = false,
                 Price = show.Entity.RegularPrice,
-                SeatId = seat.Entity.SeatId,
-                TimeSlotId = show.Entity.TimeSlots.First().TimeSlotId
+                SeatId = seat.Entity.Id,
+                TimeSlotId = show.Entity.TimeSlots.First().Id
             });
             //Assert
             Assert.True(timeSlotSeatId > 0);

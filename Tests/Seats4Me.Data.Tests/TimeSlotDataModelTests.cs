@@ -24,7 +24,7 @@ namespace Seats4Me.Data.Tests
                 });
             await context.SaveChangesAsync();
             //Assert
-            var timeSlot = await context.TimeSlots.FindAsync(timeSlotEntry.Entity.TimeSlotId);
+            var timeSlot = await context.TimeSlots.FindAsync(timeSlotEntry.Entity.Id);
             Assert.NotEqual(0, timeSlot.Week);
         }
     }

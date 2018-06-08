@@ -58,7 +58,7 @@ namespace Seats4Me.API.Tests
                                 }
             });
             await context.SaveChangesAsync();
-            var id = show.Entity.ShowId;
+            var id = show.Entity.Id;
             var showsRepository = new ShowsRepository(context);
             var shows = new Controllers.AdminShowController(showsRepository);
             //Act

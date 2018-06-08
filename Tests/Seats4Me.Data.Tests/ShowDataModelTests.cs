@@ -21,7 +21,7 @@ namespace Seats4Me.Data.Tests
             await context.SaveChangesAsync();
             //Assert
             Assert.True(context.Shows.Any());
-            var show = await context.Shows.FindAsync(showEntry.Entity.ShowId);
+            var show = await context.Shows.FindAsync(showEntry.Entity.Id);
             Assert.Equal("Midsummer night dream", show.Name);
         }
     }

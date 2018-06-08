@@ -1,4 +1,5 @@
 ﻿using System;
+using Seats4Me.Data.Model;
 
 namespace Seats4Me.API.Data
 {
@@ -20,6 +21,6 @@ namespace Seats4Me.API.Data
         public bool Reserved { get; set; }
         public bool Paid { get; set; }
         public decimal Price { get; set; }
-        public string CustomerEmail { get; set; }
+        public string Email { get; set; }
     }
 }

@@ -21,12 +21,12 @@ namespace Seats4Me.API.Model
         {
             var shows = await _context.Shows
                 .Join(_context.TimeSlots,
-                    s => s.ShowId,
+                    s => s.Id,
                     t => t.ShowId,
                     (s, t) => new TimeSlotShow()
                     {
-                        ShowId = s.ShowId,
-                        TimeSlotId = t.TimeSlotId,
+                        ShowId = s.Id,
+                        TimeSlotId = t.Id,
                         Name = s.Name,
                         Title = s.Title,
                         Description = s.Description,
@@ -37,8 +37,8 @@ namespace Seats4Me.API.Model
                         Hours = t.Hours,
                         SoldOut = !(_context.Seats
                             .GroupJoin(
-                                _context.TimeSlotSeats.Where(a => a.TimeSlotId == t.TimeSlotId),
-                                ss => ss.SeatId,
+                                _context.TimeSlotSeats.Where(a => a.TimeSlotId == t.Id),
+                                ss => ss.Id,
                                 tt => tt.SeatId,
                                 (ss, tt) => new
                                 {
@@ -62,7 +62,7 @@ namespace Seats4Me.API.Model
 
         public async Task<IEnumerable<TimeSlotShow>> GetPromotionsAsync()
         {
-            return await GetTimeSlotShow(s => s.PromoPrice > 0);
+            return await GetTimeSlotShow(s => s.Day >= DateTime.Today && s.PromoPrice > 0);
         }
 
         public async Task<IEnumerable<TimeSlotShow>> GetAsync()
@@ -117,7 +117,7 @@ namespace Seats4Me.API.Model
 
         public async Task<Show> GetAsync(int showId)
         {
-            return await _context.Shows.Include(s => s.TimeSlots).SingleOrDefaultAsync(s => s.ShowId == showId);
+            return await _context.Shows.Include(s => s.TimeSlots).SingleOrDefaultAsync(s => s.Id == showId);
         }
 
         public async Task<int> AddAsync(Show value)
@@ -126,7 +126,7 @@ namespace Seats4Me.API.Model
             if (!await SaveChangesAsync())
                 return -1;
 
-            return story.Entity.ShowId;
+            return story.Entity.Id;
         }
 
         public async Task<bool> UpdateAsync(Show value)
@@ -143,7 +143,7 @@ namespace Seats4Me.API.Model
             var show = await _context.Shows.FindAsync(showId);
             if (show == null)
             {
-                LastErrorMessage = string.Format("No record found to delete for '{0}'", showId);
+                LastErrorMessage = $"No record found to delete for '{showId}'";
                 return false;
             }
 

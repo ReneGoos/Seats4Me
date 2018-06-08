@@ -9,7 +9,7 @@ namespace Seats4Me.Data.Model
     {
         private DateTime _startDateTime;
 
-        public int TimeSlotId { get; set; }
+        public int Id { get; set; }
         public DateTime Day
         {
             get => _startDateTime;

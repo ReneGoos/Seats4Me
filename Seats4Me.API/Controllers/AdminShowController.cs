@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Seats4Me.API.Model;
 using Seats4Me.Data.Model;
@@ -6,6 +7,7 @@ using Seats4Me.Data.Model;
 namespace Seats4Me.API.Controllers
 {
     [Route("api/admin/show")]
+    [Authorize(Policy = "Administrator")]
     public class AdminShowController : Controller
     {
         private readonly ShowsRepository _repository;
@@ -29,7 +31,7 @@ namespace Seats4Me.API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutAsync(int id, [FromBody]Show value)
         {
-            value.ShowId = id;
+            value.Id = id;
             if (!await _repository.UpdateAsync(value))
                 return BadRequest(_repository.LastErrorMessage);
             return Ok();
