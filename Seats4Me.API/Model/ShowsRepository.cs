@@ -80,10 +80,7 @@ namespace Seats4Me.API.Model
             {
                 if (year == 0)
                 {
-                    if (week < today.Week())
-                        year = today.Year + 1;
-                    else
-                        year = today.Year;
+                    year = today.Year;
                 }
 
                 start = DateTimeExtensions.FirstDayOfWeek(week, year);
@@ -93,19 +90,23 @@ namespace Seats4Me.API.Model
             {
                 if (year == 0)
                 {
-                    if (month < today.Month)
-                        year = today.Year + 1;
-                    else
-                        year = today.Year;
+                    year = today.Year;
                 }
 
                 start = new DateTime(year, month, 1);
                 end = new DateTime(year, month + 1, 1);
             }
-            else if (year != 0)
+            else
             {
-                if (year != today.Year)
+                if (year == 0)
                 {
+                    year = today.Year;
+                }
+                else
+                {
+                    if (year > 0 && year < 100)
+                        year = year + 2000;
+
                     start = new DateTime(year, 1, 1);
                 }
 
@@ -160,23 +161,23 @@ namespace Seats4Me.API.Model
             foreach (var show in await _context.Shows.Include(s => s.TimeSlots).Where(s => s.TimeSlots.Any(ts => ts.Day > DateTime.Today)).ToListAsync())
             {
                 export.AppendLine("=");
-                export.AppendLine(string.Format("name: {0}", show.Name));
-                export.AppendLine(string.Format("title: {0}", show.Title));
-                export.AppendLine(string.Format("description:\n{0}", show.Name));
+                export.AppendLine($"name: {show.Name}");
+                export.AppendLine($"title: {show.Title}");
+                export.AppendLine($"description:\n{show.Description}");
                 export.AppendLine("dates:");
 
                 foreach (var timeSlot in show.TimeSlots.Where(ts => ts.Day > DateTime.Today))
                 {
-                    export.AppendLine(string.Format("\t{0}", timeSlot.Day));
+                    export.AppendLine($"\t{timeSlot.Day:dd-MM-yyyy HH:mm}");
                 }
 
                 if (show.RegularPrice > 0 || show.RegularDiscountPrice > 0)
                 {
                     export.AppendLine("prices:");
                     if (show.RegularPrice > 0)
-                        export.AppendLine(string.Format("\tregular: {0}", show.RegularPrice));
+                        export.AppendLine($"\tregular: {show.RegularPrice:c}");
                     if (show.RegularDiscountPrice > 0)
-                        export.AppendLine(string.Format("\tdiscount: {0}", show.RegularDiscountPrice));
+                        export.AppendLine($"\tdiscount: {show.RegularDiscountPrice:c}");
                 }
             }
             return export.ToString();

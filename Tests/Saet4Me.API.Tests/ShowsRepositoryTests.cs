@@ -18,6 +18,7 @@ namespace Seats4Me.API.Tests
             //Arrange
             var context = TheatreContextInit.InitializeContextInMemoryDb(System.Reflection.MethodBase.GetCurrentMethod()
                 .DeclaringType.GUID.ToString());
+
             context.Shows.AddRange(
                 new List<Show>()
                 {
@@ -78,50 +79,8 @@ namespace Seats4Me.API.Tests
         {
             var context = TheatreContextInit.InitializeContextInMemoryDb(System.Reflection.MethodBase.GetCurrentMethod()
                 .DeclaringType.GUID.ToString());
-            context.Shows.AddRange(
-                new List<Show>()
-                {
-                    new Show()
-                    {
-                        Name = "Hamlet vs Hamlet",
-                        TimeSlots = new List<TimeSlot>()
-                        {
-                            new TimeSlot()
-                            {
-                                Day = Convert.ToDateTime("31-05-2018 20:00", CultureInfo.CurrentCulture),
-                                Hours = 2
-                            },
 
-                            new TimeSlot()
-                            {
-                                Day = Convert.ToDateTime("02-06-2018 20:00", CultureInfo.CurrentCulture),
-                                Hours = 2
-                            },
-                            new TimeSlot()
-                            {
-                                Day = Convert.ToDateTime("08-06-2018 20:00", CultureInfo.CurrentCulture),
-                                Hours = 3
-                            }
-                        }
-                    },
-                    new Show()
-                    {
-                        Name = "Branden",
-                        TimeSlots = new List<TimeSlot>()
-                        {
-                            new TimeSlot()
-                            {
-                                Day = Convert.ToDateTime("01-06-2018 20:00", CultureInfo.CurrentCulture),
-                                Hours = 1.5
-                            },
-                            new TimeSlot()
-                            {
-                                Day = Convert.ToDateTime("15-06-2018 20:00", CultureInfo.CurrentCulture),
-                                Hours = 1.5
-                            }
-                        }
-                    }
-                });
+            TheatreContextInit.AddTestData(context);
             await context.SaveChangesAsync();
             var showsRepository = new ShowsRepository(context);
             //Act

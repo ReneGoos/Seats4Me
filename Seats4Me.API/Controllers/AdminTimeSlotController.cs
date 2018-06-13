@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Seats4Me.API.Model;
 using Seats4Me.Data.Model;
@@ -21,7 +17,7 @@ namespace Seats4Me.API.Controllers
             _repository = repository;
         }
 
-        // POST api/theatre/admin/show
+        // POST api/admin/timeSlot
         [HttpPost]
         public async Task<IActionResult> PostAsync([FromBody]TimeSlot value)
         {
@@ -31,7 +27,7 @@ namespace Seats4Me.API.Controllers
             return Ok(result);
         }
 
-        // PUT api/theatre/admin/show/5
+        // PUT api/admin/timeSlot/5
         [HttpPut("{id}")]
         public async Task<IActionResult> PutAsync(int id, [FromBody]TimeSlot value)
         {
@@ -41,7 +37,7 @@ namespace Seats4Me.API.Controllers
             return Ok();
         }
 
-        // DELETE api/theatre/admin/show/5
+        // DELETE api/admin/timeSlot/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAsync(int id)
         {

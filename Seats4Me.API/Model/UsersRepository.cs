@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,10 +17,10 @@ namespace Seats4Me.API.Model
         {
         }
 
-        public async Task<Seats4MeUser> GetAuthenticatedUserAsync(Seats4MeUser user)
+        public async Task<Seats4MeUser> GetAuthenticatedUserAsync(string email, string password)
         {
             return await _context.Seats4MeUsers.FirstOrDefaultAsync(u =>
-                    u.Email.Equals(user.Email) && u.Password.Equals(user.Password));
+                    u.Email.Equals(email.ToLower()) && u.Password.Equals(password));
         }
 
         public string GetToken(Seats4MeUser user, string jwtKey, string jwtIssuer)

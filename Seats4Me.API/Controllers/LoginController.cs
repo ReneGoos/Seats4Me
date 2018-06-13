@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Seats4Me.API.Model;
@@ -25,7 +21,7 @@ namespace Seats4Me.API.Controllers
         [HttpPost]
         public async Task<IActionResult> PostAsync([FromBody] Seats4MeUser user)
         {
-            var authUser = await _repository.GetAuthenticatedUserAsync(user);
+            var authUser = await _repository.GetAuthenticatedUserAsync(user.Email, user.Password);
             if (authUser == null)
                 return Unauthorized();
             return Ok(_repository.GetToken(authUser, _configuration["Signing:Key"], _configuration["Signing:Issuer"]));

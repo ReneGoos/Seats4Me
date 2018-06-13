@@ -1,5 +1,4 @@
 ﻿using System;
-using Seats4Me.Data.Model;
 
 namespace Seats4Me.API.Data
 {

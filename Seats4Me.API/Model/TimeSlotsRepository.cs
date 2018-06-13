@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Seats4Me.API.Data;
-using Seats4Me.Data.Common;
+﻿using System.Threading.Tasks;
 using Seats4Me.Data.Model;
 
 namespace Seats4Me.API.Model

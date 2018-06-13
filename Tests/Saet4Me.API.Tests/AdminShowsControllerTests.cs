@@ -40,6 +40,35 @@ namespace Seats4Me.API.Tests
         }
 
         [Fact]
+        public async Task UpdateShowPriceWhenChanged()
+        {
+            //Arrange
+            var context = TheatreContextInit.InitializeContextInMemoryDb(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.GUID.ToString());
+            var show = await context.Shows.AddAsync(new Show()
+            {
+                Name = "De Woef side story",
+                TimeSlots = new List<TimeSlot>()
+                {
+                    new TimeSlot()
+                    {
+                        Day = Convert.ToDateTime("01-06-2018 14:00", CultureInfo.CurrentCulture),
+                        Hours = 1.5
+                    }
+                }
+            });
+            await context.SaveChangesAsync();
+
+            var showsRepository = new ShowsRepository(context);
+            var shows = new Controllers.AdminShowController(showsRepository);
+            //Act
+            show.Entity.RegularPrice = 100;
+            var result = await shows.PutAsync(show.Entity.Id, show.Entity);
+            //Assert
+            var okResult = Assert.IsAssignableFrom<OkResult>(result);
+            Assert.NotNull(context.Shows.First(s => s.RegularPrice == 100));
+        }
+
+        [Fact]
         public async Task DeleteNewEntrySucceds()
         {
             //Arrange

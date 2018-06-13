@@ -17,7 +17,7 @@ namespace Seats4Me.API.Controllers
             _repository = repository;
         }
 
-        // POST api/theatre/admin/show
+        // POST api/admin/show
         [HttpPost]
         public async Task<IActionResult> PostAsync([FromBody]Show value)
         {
@@ -27,7 +27,7 @@ namespace Seats4Me.API.Controllers
             return Ok(result);
         }
 
-        // PUT api/theatre/admin/show/5
+        // PUT api/admin/show/5
         [HttpPut("{id}")]
         public async Task<IActionResult> PutAsync(int id, [FromBody]Show value)
         {
@@ -37,7 +37,7 @@ namespace Seats4Me.API.Controllers
             return Ok();
         }
 
-        // DELETE api/theatre/admin/show/5
+        // DELETE api/admin/show/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAsync(int id)
         {
@@ -46,6 +46,7 @@ namespace Seats4Me.API.Controllers
             return Ok();
         }
 
+        //GET api/admin/show/export
         [HttpGet("export")]
         public async Task<string> Export()
         {

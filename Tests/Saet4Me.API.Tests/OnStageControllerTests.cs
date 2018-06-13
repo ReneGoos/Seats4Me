@@ -100,7 +100,7 @@ namespace Seats4Me.API.Tests
             //Assert
             var okResult = Assert.IsAssignableFrom<OkObjectResult>(result);
             var listShows = Assert.IsAssignableFrom<IEnumerable<TimeSlotShow>>(okResult.Value).ToList();
-            Assert.Contains(listShows, s => s.Name.Equals("Branden") && s.Hours == 1.5);
+            Assert.Contains(listShows, s => s.Name.Equals("Branden") && Math.Abs(s.Hours - 1.5) < 0.01);
         }
         [Fact]
         public async Task ListShowsWithSoldOutCorrectByWeekWhenGetTheatreWeek()
@@ -231,7 +231,7 @@ namespace Seats4Me.API.Tests
         {
             //Arrange
             var context = TheatreContextInit.InitializeContextInMemoryDb(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.GUID.ToString());
-            var show = context.Shows.Add(
+            context.Shows.Add(
                         new Show()
                         {
                             Name = "Hamlet vs Hamlet",

@@ -1,19 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
-using System.Security.Principal;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Controller;
 using Seats4Me.API.Data;
 using Seats4Me.API.Model;
 using Seats4Me.Data.Model;
 using Xunit;
-using Moq;
 using Microsoft.AspNetCore.Http;
 
 namespace Seats4Me.API.Tests
@@ -37,6 +32,9 @@ namespace Seats4Me.API.Tests
         private async Task<TheatreContext> SetupData(string name)
         {
             var context = TheatreContextInit.InitializeContextInMemoryDb(name);
+            TheatreContextInit.AddTestData(context);
+
+            var today = DateTime.Today;
             await context.Shows.AddAsync(new Show()
             {
                 Name = "De Woef side story",
@@ -46,15 +44,16 @@ namespace Seats4Me.API.Tests
                 {
                     new TimeSlot()
                     {
-                        Day = Convert.ToDateTime("01-06-2018 14:00", CultureInfo.CurrentCulture),
+                        Day = new DateTime(today.Year, today.Month, today.Day, 14, 0, 0).AddDays(2),
                         Hours = 1.5,
                         PromoPrice = 10
                     }
                 }
             });
+
             for (var row = 1; row <= 15; row++)
             for (var chair = 1; chair <= 6; chair++)
-                await context.Seats.AddAsync(new Seats4Me.Data.Model.Seat()
+                await context.Seats.AddAsync(new Seat()
                 {
                     Row = row,
                     Chair = chair
@@ -79,9 +78,9 @@ namespace Seats4Me.API.Tests
             var ticketsRepository = new TicketsRepository(context);
             var ticketsCtrl = new Controllers.TicketsController(ticketsRepository);
 
-            var show = context.Shows.First();
+            var show = context.Shows.First(s => s.Name.Contains("Woef"));
             var timeSlot = show.TimeSlots.First();
-            var seat = context.Seats.FirstOrDefault(s => s.Row == 1 && s.Chair == 1);
+            var seat = context.Seats.First(s => s.Row == 1 && s.Chair == 1);
             var user = context.Seats4MeUsers.First();
 
             ticketsCtrl.ControllerContext.HttpContext = new DefaultHttpContext();
@@ -116,9 +115,9 @@ namespace Seats4Me.API.Tests
             var ticketsRepository = new TicketsRepository(context);
             var ticketsCtrl = new Controllers.TicketsController(ticketsRepository);
 
-            var show = context.Shows.First();
+            var show = context.Shows.First(s => s.Name.Contains("Woef"));
             var timeSlot = show.TimeSlots.First();
-            var seat = context.Seats.FirstOrDefault(s => s.Row == 1 && s.Chair == 1);
+            var seat = context.Seats.First(s => s.Row == 1 && s.Chair == 1);
             var user = context.Seats4MeUsers.First();
 
             ticketsCtrl.ControllerContext.HttpContext = new DefaultHttpContext();
@@ -237,7 +236,7 @@ namespace Seats4Me.API.Tests
 
             var show = context.Shows.First();
             var timeSlot = show.TimeSlots.First();
-            var seat = context.Seats.FirstOrDefault(s => s.Row == 1 && s.Chair == 1);
+            var seat = context.Seats.First(s => s.Row == 1 && s.Chair == 1);
             var user = context.Seats4MeUsers.First();
 
             var ticket = new Ticket()

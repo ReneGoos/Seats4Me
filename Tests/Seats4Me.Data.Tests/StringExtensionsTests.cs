@@ -1,6 +1,4 @@
-﻿using System;
-using System.Linq;
-using Seats4Me.Data.Common;
+﻿using Seats4Me.Data.Common;
 using Xunit;
 
 namespace Seats4Me.Data.Tests
@@ -38,8 +36,7 @@ namespace Seats4Me.Data.Tests
             var result = test.InitCap();
             //Assert
             Assert.NotEqual(test, result);
-            Assert.Equal(test.Substring(1, test.Length - 1), result.Substring(1, result.Length - 1));
-            Assert.Equal(test.Length, result.Length);
+            Assert.Equal("Test", result);
         }
     }
 }

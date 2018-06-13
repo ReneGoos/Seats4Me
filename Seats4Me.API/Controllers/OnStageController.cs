@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Seats4Me.API.Model;
 using Seats4Me.Data.Common;
-using Seats4Me.Data.Model;
 
 namespace Seats4Me.API.Controllers
 {
@@ -33,17 +31,17 @@ namespace Seats4Me.API.Controllers
         }
 
         // GET api/onstage/week
-        [HttpGet("week/{week:int}/{year:int}")]
-        public async Task<IActionResult> GetWeekAsync(int week, int year)
+        [HttpGet("week/{week:int}/{year:int?}")]
+        public async Task<IActionResult> GetWeekAsync(int week, int year = 0)
         {
-            if (week < 1 || week > new DateTime(year, 12, 31).Week())
+            if (week < 1 || week > new DateTime(year == 0 ? DateTime.Today.Year : year, 12, 31).Week())
                 return BadRequest(string.Format("Invalid week number {0}", week));
             return Ok(await _repository.GetOnPeriodAsync(week: week, year: year));
         }
 
         // GET api/onstage/week
-        [HttpGet("month/{month:int}/{year:int}")]
-        public async Task<IActionResult> GetMonthAsync(int month, int year)
+        [HttpGet("month/{month:int}/{year:int?}")]
+        public async Task<IActionResult> GetMonthAsync(int month, int year = 0)
         {
             if (month < 1 || month > 12)
                 return BadRequest(string.Format("Invalid month {0}", month));
@@ -51,10 +49,10 @@ namespace Seats4Me.API.Controllers
         }
 
         // GET api/onstage/week
-        [HttpGet("year/{year:int}")]
-        public async Task<IActionResult> GetYearAsync(int year)
+        [HttpGet("year/{year:int?}")]
+        public async Task<IActionResult> GetYearAsync(int year = 0)
         {
-            if (year < 1900)
+            if (year >= 100 && year < 1900 || year < 0)
                 return BadRequest(string.Format("Invalid year number {0}", year));
             return Ok(await _repository.GetOnPeriodAsync(year: year));
         }
