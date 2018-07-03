@@ -1,5 +1,6 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -30,7 +31,7 @@ namespace Seats4Me.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAsync()
         {
-            var email = User.Claims.First(c => c.Type.Equals(JwtRegisteredClaimNames.Email)).Value;
+            var email = User.Claims.First(c => c.Type.Equals(ClaimTypes.Email)).Value;
             return Ok(await _repository.GetMyTicketsAsync(email));
         }
 
@@ -39,7 +40,7 @@ namespace Seats4Me.API.Controllers
         [HttpPost]
         public async Task<IActionResult> PostAsync([FromBody]Ticket value)
         {
-            var email = User.Claims.First(c => c.Type.Equals(JwtRegisteredClaimNames.Email)).Value;
+            var email = User.Claims.First(c => c.Type.Equals(ClaimTypes.Email)).Value;
             if (!value.Email.Equals(email))
                 return BadRequest(_repository.LastErrorMessage);
 
@@ -51,10 +52,10 @@ namespace Seats4Me.API.Controllers
 
         // PUT: api/tickets/5
         [Authorize(Policy = "Customer")]
-        [HttpPut("{timeSlotId}")]
+        [HttpPut("{timeSlotSeatId}")]
         public async Task<IActionResult> PutAsync(int timeSlotSeatId, [FromBody]Ticket value)
         {
-            var email = User.Claims.First(c => c.Type.Equals(JwtRegisteredClaimNames.Email)).Value;
+            var email = User.Claims.First(c => c.Type.Equals(ClaimTypes.Email)).Value;
             if (!_repository.ValidTicketUser(timeSlotSeatId, email))
                 return BadRequest(_repository.LastErrorMessage);
 
@@ -66,10 +67,10 @@ namespace Seats4Me.API.Controllers
 
         // DELETE: api/ApiWithActions/5
         [Authorize(Policy = "Customer")]
-        [HttpDelete("{timeSlotId}")]
+        [HttpDelete("{timeSlotSeatId}")]
         public async Task<IActionResult> DeleteAsync(int timeSlotSeatId)
         {
-            var email = User.Claims.First(c => c.Type.Equals(JwtRegisteredClaimNames.Email)).Value;
+            var email = User.Claims.First(c => c.Type.Equals(ClaimTypes.Email)).Value;
             if (!_repository.ValidTicketUser(timeSlotSeatId, email))
                 return BadRequest(_repository.LastErrorMessage);
 

@@ -233,6 +233,8 @@ namespace Seats4Me.API
                 Name = "Woef Side Story (8+), RO Theater",
                 Title = "Woef Side Story",
                 Description = "De familiehit Woef Side Story (8+) is een Romeo en Julia op z’n hondjes. De stoere straathond Toto en de bloedmooie rashond Marina zijn verliefd. Maar in een wereld waarin iedereen in hondenhokjes is ingedeeld, mag hun liefde niet bestaan. Is de liefde van Toto en Marina sterk genoeg?",
+                RegularPrice = 17.50M,
+                RegularDiscountPrice = 12.5M,
                 TimeSlots = new List<TimeSlot>()
                 {
                     new TimeSlot()
@@ -248,6 +250,27 @@ namespace Seats4Me.API
                 }
             });
 
+            context.Shows.Add(new Show()
+            {
+                Name = "OUDFIT, Theater Zuidplein",
+                Title = "OUDFIT",
+                Description = "OUDFIT gaat over ouderen die zich staande proberen te houden in een steeds jonger, hipper en sneller Rotterdam. Een oergezellige middag!",
+                RegularPrice = 15.0M,
+                RegularDiscountPrice = 10.0M,
+                TimeSlots = new List<TimeSlot>()
+                {
+                    new TimeSlot()
+                    {
+                        Day = dateTimeEvening.AddDays(31),
+                        Hours =  1.5
+                    },
+                    new TimeSlot()
+                    {
+                        Day = dateTimeEvening.AddDays(31),
+                        Hours =  1.5
+                    }
+                }
+            });
             for (var row = 1; row <= 15; row++)
             for (var chair = 1; chair <= 6; chair++)
                 context.Seats.Add(new Seat()

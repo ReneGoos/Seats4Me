@@ -84,7 +84,7 @@ namespace Seats4Me.API.Tests
             var user = context.Seats4MeUsers.First();
 
             ticketsCtrl.ControllerContext.HttpContext = new DefaultHttpContext();
-            ticketsCtrl.ControllerContext.HttpContext.User = new TestPrincipal(new Claim(JwtRegisteredClaimNames.Email, user.Email));
+            ticketsCtrl.ControllerContext.HttpContext.User = new TestPrincipal(new Claim(ClaimTypes.Email, user.Email));
 
             var ticket = new Ticket()
             {
@@ -121,7 +121,7 @@ namespace Seats4Me.API.Tests
             var user = context.Seats4MeUsers.First();
 
             ticketsCtrl.ControllerContext.HttpContext = new DefaultHttpContext();
-            ticketsCtrl.ControllerContext.HttpContext.User = new TestPrincipal(new Claim(JwtRegisteredClaimNames.Email, user.Email));
+            ticketsCtrl.ControllerContext.HttpContext.User = new TestPrincipal(new Claim(ClaimTypes.Email, user.Email));
 
             var ticket = new Ticket()
             {
@@ -168,7 +168,7 @@ namespace Seats4Me.API.Tests
             await context.SaveChangesAsync();
 
             ticketsCtrl.ControllerContext.HttpContext = new DefaultHttpContext();
-            ticketsCtrl.ControllerContext.HttpContext.User = new TestPrincipal(new Claim(JwtRegisteredClaimNames.Email, user.Email));
+            ticketsCtrl.ControllerContext.HttpContext.User = new TestPrincipal(new Claim(ClaimTypes.Email, user.Email));
 
             //Act
             var result = await ticketsCtrl.GetAsync();
@@ -216,7 +216,7 @@ namespace Seats4Me.API.Tests
             };
 
             ticketsCtrl.ControllerContext.HttpContext = new DefaultHttpContext();
-            ticketsCtrl.ControllerContext.HttpContext.User = new TestPrincipal(new Claim(JwtRegisteredClaimNames.Email, user.Email));
+            ticketsCtrl.ControllerContext.HttpContext.User = new TestPrincipal(new Claim(ClaimTypes.Email, user.Email));
 
             //Act
             var result = await ticketsCtrl.PutAsync(timeSlotSeatId, ticket);
@@ -249,7 +249,7 @@ namespace Seats4Me.API.Tests
                 Reserved = true
             };
             ticketsCtrl.ControllerContext.HttpContext = new DefaultHttpContext();
-            ticketsCtrl.ControllerContext.HttpContext.User = new TestPrincipal(new Claim(JwtRegisteredClaimNames.Email, user.Email));
+            ticketsCtrl.ControllerContext.HttpContext.User = new TestPrincipal(new Claim(ClaimTypes.Email, user.Email));
 
             //Act
             var result = await ticketsCtrl.PostAsync(ticket);
