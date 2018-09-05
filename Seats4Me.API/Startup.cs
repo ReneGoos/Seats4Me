@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Seats4Me.API.Model;
+using Seats4Me.API.Repositories;
 using Seats4Me.Data.Model;
 using Swashbuckle.AspNetCore.Swagger;
 using System;
@@ -12,7 +12,9 @@ using System.Linq;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using Seats4Me.API.Data;
+using Seats4Me.API.Models;
+using AutoMapper;
+using Seats4Me.API.Services;
 
 namespace Seats4Me.API
 {
@@ -41,7 +43,10 @@ namespace Seats4Me.API
             services.AddDbContext<TheatreContext>(options =>
                 options.UseSqlServer(conn)
                         .EnableSensitiveDataLogging());
-            
+
+            services.AddScoped<IShowsRepository, ShowsRepository>();
+            services.AddScoped<IShowsService, ShowsService>();
+
             services.AddTransient<ShowsRepository, ShowsRepository>();
             services.AddTransient<TicketsRepository, TicketsRepository>();
             services.AddTransient<TimeSlotsRepository, TimeSlotsRepository>();
@@ -104,9 +109,14 @@ namespace Seats4Me.API
                 cfg.AddPolicy("Customer", p => p.RequireClaim("Customer", "True"));
             });
 
-            services.AddMvcCore()
+            services.AddMvcCore(
+                setupAction =>
+                {
+                    setupAction.ReturnHttpNotAcceptable = true;
+                })
                 .AddAuthorization()
                 .AddJsonFormatters()
+                .AddXmlSerializerFormatters()
                 .AddApiExplorer();
 
             services.AddSwaggerGen(c =>
@@ -153,7 +163,7 @@ namespace Seats4Me.API
 
             app.UseAuthentication();
 
-            AutoMapper.Mapper.Initialize(cfg => cfg.AddProfile<Seats4MeProfile>());
+            Mapper.Initialize(cfg => cfg.AddProfile<Seats4MeProfile>());
 
             app.UseMvc();
         }

@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using Seats4Me.API.Model;
+using Seats4Me.API.Repositories;
 using Seats4Me.Data.Model;
 
 namespace Seats4Me.API.Controllers

@@ -1,5 +1,5 @@
 ﻿using System.Threading.Tasks;
-using Seats4Me.API.Model;
+using Seats4Me.API.Repositories;
 using Seats4Me.Data.Model;
 using Xunit;
 

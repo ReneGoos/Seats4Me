@@ -4,8 +4,8 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Seats4Me.API.Data;
-using Seats4Me.API.Model;
+using Seats4Me.API.Models.Output;
+using Seats4Me.API.Repositories;
 
 namespace Seats4Me.API.Controllers
 {
@@ -38,7 +38,7 @@ namespace Seats4Me.API.Controllers
         // POST: api/tickets
         [Authorize(Policy = "Customer")]
         [HttpPost]
-        public async Task<IActionResult> PostAsync([FromBody]Ticket value)
+        public async Task<IActionResult> PostAsync([FromBody]TicketOutputModel value)
         {
             var email = User.Claims.First(c => c.Type.Equals(ClaimTypes.Email)).Value;
             if (!value.Email.Equals(email))
@@ -53,7 +53,7 @@ namespace Seats4Me.API.Controllers
         // PUT: api/tickets/5
         [Authorize(Policy = "Customer")]
         [HttpPut("{timeSlotSeatId}")]
-        public async Task<IActionResult> PutAsync(int timeSlotSeatId, [FromBody]Ticket value)
+        public async Task<IActionResult> PutAsync(int timeSlotSeatId, [FromBody]TicketOutputModel value)
         {
             var email = User.Claims.First(c => c.Type.Equals(ClaimTypes.Email)).Value;
             if (!_repository.ValidTicketUser(timeSlotSeatId, email))

@@ -1,5 +1,5 @@
-﻿using Seats4Me.API.Data;
-using Seats4Me.API.Model;
+﻿using Seats4Me.API.Models.Output;
+using Seats4Me.API.Repositories;
 using Seats4Me.Data.Model;
 using System;
 using System.Collections.Generic;
@@ -48,7 +48,7 @@ namespace Seats4Me.API.Tests
 
             var ticketsRepository = new TicketsRepository(context);
             //Act
-            var timeSlotSeatId = await ticketsRepository.AddAsync(new Ticket()
+            var timeSlotSeatId = await ticketsRepository.AddAsync(new TicketOutputModel()
             {
                 Paid = true,
                 Email = user.Entity.Email,

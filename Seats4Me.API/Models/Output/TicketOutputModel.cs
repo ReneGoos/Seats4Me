@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace Seats4Me.API.Data
+namespace Seats4Me.API.Models.Output
 {
-    public class Ticket
+    public class TicketOutputModel
     {
         public int ShowId { get; set; }
         public string Name { get; set; }

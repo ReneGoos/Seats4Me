@@ -2,10 +2,10 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Seats4Me.API.Data;
+using Seats4Me.API.Models.Output;
 using Seats4Me.Data.Model;
 
-namespace Seats4Me.API.Model
+namespace Seats4Me.API.Repositories
 {
     public class TicketsRepository : TheatreRepository
     {
@@ -13,7 +13,7 @@ namespace Seats4Me.API.Model
         {
         }
 
-        public async Task<IEnumerable<Ticket>> GetAsync(int timeSlotId)
+        public async Task<IEnumerable<TicketOutputModel>> GetAsync(int timeSlotId)
         {
             var timeSlot = await _context.TimeSlots.Include(t => t.Show)
                 .FirstOrDefaultAsync(s => s.Id == timeSlotId);
@@ -35,7 +35,7 @@ namespace Seats4Me.API.Model
                         t
                     }
                 )
-                .Select(s => new Ticket()
+                .Select(s => new TicketOutputModel()
                     {
                         ShowId = timeSlot.Show.Id,
                         Name = timeSlot.Show.Name,
@@ -69,7 +69,7 @@ namespace Seats4Me.API.Model
             return true;
         }
 
-        public async Task<int> AddAsync(Ticket value)
+        public async Task<int> AddAsync(TicketOutputModel value)
         {
             if (!value.Reserved && !value.Paid)
             {
@@ -118,7 +118,7 @@ namespace Seats4Me.API.Model
             return timeSlotSeat.Entity.Id;
         }
 
-        public async Task<bool> UpdateAsync(Ticket value)
+        public async Task<bool> UpdateAsync(TicketOutputModel value)
         {
             if (!value.Reserved && !value.Paid)
             {
@@ -147,7 +147,7 @@ namespace Seats4Me.API.Model
             _context.TimeSlotSeats.Remove(timeSlotSeat);
             return await SaveChangesAsync();
         }
-        public async Task<IEnumerable<Ticket>> GetFreeSeats(int timeSlotId)
+        public async Task<IEnumerable<TicketOutputModel>> GetFreeSeats(int timeSlotId)
         {
             var timeSlot = await _context.TimeSlots.Include(t => t.Show)
                 .FirstOrDefaultAsync(s => s.Id == timeSlotId);
@@ -170,7 +170,7 @@ namespace Seats4Me.API.Model
                     }
                 )
                 .Where(s => s.t == null)
-                .Select(s => new Ticket()
+                .Select(s => new TicketOutputModel()
                     {
                         ShowId = timeSlot.Show.Id,
                         Name = timeSlot.Show.Name,
@@ -193,7 +193,7 @@ namespace Seats4Me.API.Model
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Ticket>> GetMyTicketsAsync(string email)
+        public async Task<IEnumerable<TicketOutputModel>> GetMyTicketsAsync(string email)
         {
             return await _context.TimeSlotSeats
                                 .Include(ts => ts.Seats4MeUser)
@@ -201,7 +201,7 @@ namespace Seats4Me.API.Model
                                 .Include(ts => ts.TimeSlot)
                                 .ThenInclude(s => s.Show)
                                 .Where(ts => ts.Seats4MeUser.Email.Equals(email))
-                                .Select(s => new Ticket()
+                                .Select(s => new TicketOutputModel()
                                     {
                                         ShowId = s.TimeSlot.Show.Id,
                                         Name = s.TimeSlot.Show.Name,

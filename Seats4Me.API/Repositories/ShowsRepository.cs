@@ -5,13 +5,13 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Seats4Me.API.Data;
+using Seats4Me.API.Models;
 using Seats4Me.Data.Common;
 using Seats4Me.Data.Model;
 
-namespace Seats4Me.API.Model
+namespace Seats4Me.API.Repositories
 {
-    public class ShowsRepository : TheatreRepository
+    public class ShowsRepository : TheatreRepository, IShowsRepository
     {
         public ShowsRepository(TheatreContext context) : base(context)
         {
@@ -65,7 +65,7 @@ namespace Seats4Me.API.Model
             return await GetTimeSlotShow(s => s.Day >= DateTime.Today && s.PromoPrice > 0);
         }
 
-        public async Task<IEnumerable<TimeSlotShow>> GetAsync()
+        public async Task<IEnumerable<TimeSlotShow>> GetSlotsAsync()
         {
             return await GetTimeSlotShow(s => s.Day >= DateTime.Today);
         }
@@ -116,26 +116,34 @@ namespace Seats4Me.API.Model
             return await GetTimeSlotShow(s => s.Day >= start && s.Day < end);
         }
 
-        public async Task<Show> GetAsync(int showId)
+        public Task<List<Show>> GetAsync()
         {
-            return await _context.Shows.Include(s => s.TimeSlots).SingleOrDefaultAsync(s => s.Id == showId);
+            return _context.Shows.ToListAsync();
         }
 
-        public async Task<int> AddAsync(Show value)
+        public Task<Show> GetAsync(int showId)
         {
-            var story = await _context.Shows.AddAsync(value);
+            return _context.Shows.SingleOrDefaultAsync(s => s.Id == showId);
+        }
+
+        public async Task<Show> AddAsync(Show value)
+        {
+            var show = await _context.Shows.AddAsync(value);
             if (!await SaveChangesAsync())
-                return -1;
+                return null;
 
-            return story.Entity.Id;
+            return show.Entity;
         }
 
-        public async Task<bool> UpdateAsync(Show value)
+        public async Task<Show> UpdateAsync(Show value)
         {
             LastErrorMessage = "";
             _context.Shows.Attach(value);
-            _context.Shows.Update(value);
-            return await SaveChangesAsync();
+            var showEntity = _context.Shows.Update(value);
+            if (await SaveChangesAsync())
+                return null;
+
+            return showEntity.Entity;
         }
 
 

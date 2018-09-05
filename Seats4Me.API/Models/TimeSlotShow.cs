@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Seats4Me.API.Data
+namespace Seats4Me.API.Models
 {
     public class TimeSlotShow
     {

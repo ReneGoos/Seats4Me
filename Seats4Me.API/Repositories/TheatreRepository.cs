@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Seats4Me.Data.Model;
 
-namespace Seats4Me.API.Model
+namespace Seats4Me.API.Repositories
 {
     public class TheatreRepository
     {

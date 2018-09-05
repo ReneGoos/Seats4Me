@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Seats4Me.API.Model;
+using Seats4Me.API.Repositories;
 using Seats4Me.Data.Model;
 using Xunit;
 

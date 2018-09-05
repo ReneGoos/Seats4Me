@@ -5,8 +5,8 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Seats4Me.API.Data;
-using Seats4Me.API.Model;
+using Seats4Me.API.Models.Output;
+using Seats4Me.API.Repositories;
 using Seats4Me.Data.Model;
 using Xunit;
 using Microsoft.AspNetCore.Http;
@@ -86,7 +86,7 @@ namespace Seats4Me.API.Tests
             ticketsCtrl.ControllerContext.HttpContext = new DefaultHttpContext();
             ticketsCtrl.ControllerContext.HttpContext.User = new TestPrincipal(new Claim(ClaimTypes.Email, user.Email));
 
-            var ticket = new Ticket()
+            var ticket = new TicketOutputModel()
             {
                 TimeSlotId = timeSlot.Id,
                 SeatId = seat.Id,
@@ -123,7 +123,7 @@ namespace Seats4Me.API.Tests
             ticketsCtrl.ControllerContext.HttpContext = new DefaultHttpContext();
             ticketsCtrl.ControllerContext.HttpContext.User = new TestPrincipal(new Claim(ClaimTypes.Email, user.Email));
 
-            var ticket = new Ticket()
+            var ticket = new TicketOutputModel()
             {
                 TimeSlotId = timeSlot.Id,
                 SeatId = seat.Id,
@@ -174,7 +174,7 @@ namespace Seats4Me.API.Tests
             var result = await ticketsCtrl.GetAsync();
             //Assert
             var okResult = Assert.IsAssignableFrom<OkObjectResult>(result);
-            var tickets = Assert.IsAssignableFrom<IEnumerable<Ticket>>(okResult.Value);
+            var tickets = Assert.IsAssignableFrom<IEnumerable<TicketOutputModel>>(okResult.Value);
             Assert.True(tickets.Any());
         }
 
@@ -204,7 +204,7 @@ namespace Seats4Me.API.Tests
             await context.SaveChangesAsync();
             var timeSlotSeatId = timeSlotSeat.Entity.Id;
 
-            var ticket = new Ticket()
+            var ticket = new TicketOutputModel()
             {
                 TimeSlotSeatId = timeSlotSeatId,
                 TimeSlotId = timeSlot.Id,
@@ -239,7 +239,7 @@ namespace Seats4Me.API.Tests
             var seat = context.Seats.First(s => s.Row == 1 && s.Chair == 1);
             var user = context.Seats4MeUsers.First();
 
-            var ticket = new Ticket()
+            var ticket = new TicketOutputModel()
             {
                 TimeSlotId = timeSlot.Id,
                 SeatId = seat.Id,
