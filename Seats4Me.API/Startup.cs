@@ -12,6 +12,7 @@ using System.Linq;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Seats4Me.API.Data;
 
 namespace Seats4Me.API
 {
@@ -151,6 +152,8 @@ namespace Seats4Me.API
             });
 
             app.UseAuthentication();
+
+            AutoMapper.Mapper.Initialize(cfg => cfg.AddProfile<Seats4MeProfile>());
 
             app.UseMvc();
         }
