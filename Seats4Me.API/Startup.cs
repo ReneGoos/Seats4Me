@@ -15,6 +15,8 @@ using Microsoft.IdentityModel.Tokens;
 using Seats4Me.API.Models;
 using AutoMapper;
 using Seats4Me.API.Services;
+using Seats4MeUser = Seats4Me.API.Models.Input.Seats4MeUser;
+using TimeSlot = Seats4Me.API.Models.Input.TimeSlot;
 
 namespace Seats4Me.API
 {
@@ -109,11 +111,7 @@ namespace Seats4Me.API
                 cfg.AddPolicy("Customer", p => p.RequireClaim("Customer", "True"));
             });
 
-            services.AddMvcCore(
-                setupAction =>
-                {
-                    setupAction.ReturnHttpNotAcceptable = true;
-                })
+            services.AddMvcCore(setupAction => { setupAction.ReturnHttpNotAcceptable = false; })
                 .AddAuthorization()
                 .AddJsonFormatters()
                 .AddXmlSerializerFormatters()

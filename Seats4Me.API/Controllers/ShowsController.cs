@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -24,22 +25,24 @@ namespace Seats4Me.API.Controllers
 
         // GET api/shows
         [HttpGet]
+        [ProducesResponseType(typeof(List<ShowOutputModel>), (int)HttpStatusCode.OK)]
         public async Task<IActionResult> GetAsync()
         {
-            var shows = await _showsService.GetAsync();
-
-            var showModels = Mapper.Map<IEnumerable<ShowOutputModel>>(shows);
+            var showModels = await _showsService.GetAsync();
 
             return Ok(showModels);
         }
 
         // GET api/shows/5
         [HttpGet("{id}", Name = "GetAsync")]
+        [ProducesResponseType(typeof(ShowOutputModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         public async Task<IActionResult> GetAsync(int id)
         {
-            var show = await _showsService.GetAsync(id);
+            var showModel = await _showsService.GetAsync(id);
 
-            var showModel = Mapper.Map<ShowOutputModel>(show);
+            if (showModel == null)
+                return NotFound();
 
             return Ok(showModel);
         }
@@ -47,6 +50,8 @@ namespace Seats4Me.API.Controllers
         // POST api/show
         [Authorize(Policy = "Administrator")]
         [HttpPost]
+        [ProducesResponseType(typeof(ShowOutputModel), (int)HttpStatusCode.Created)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> PostAsync([FromBody]ShowInputModel value)
         {
             if (value == null)
@@ -61,7 +66,10 @@ namespace Seats4Me.API.Controllers
         }
 
         // PUT api/show/5
+        [Authorize(Policy = "Administrator")]
         [HttpPut("{id}")]
+        [ProducesResponseType(typeof(ShowOutputModel), (int)HttpStatusCode.Created)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> PutAsync(int id, [FromBody]ShowInputModel value)
         {
             if (value == null)
@@ -73,16 +81,19 @@ namespace Seats4Me.API.Controllers
             return Ok(result);
         }
 
-        /*
+        [Authorize(Policy = "Administrator")]
         // DELETE api/admin/show/5
         [HttpDelete("{id}")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> DeleteAsync(int id)
         {
             if (!await _showsService.DeleteAsync(id))
-                return BadRequest(_showsService.LastErrorMessage);
+                return BadRequest();
             return Ok();
         }
 
+        /*
         // GET api/shows/week
         [HttpGet("week/{week:int}/{year:int?}")]
         public async Task<IActionResult> GetWeekAsync(int week, int year = 0)

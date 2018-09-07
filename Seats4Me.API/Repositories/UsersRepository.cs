@@ -11,7 +11,7 @@ using Seats4Me.Data.Model;
 
 namespace Seats4Me.API.Repositories
 {
-    public class UsersRepository : TheatreRepository
+    public class UsersRepository : TheatreRepository, IUsersRepository
     {
         public UsersRepository(TheatreContext context) : base(context)
         {

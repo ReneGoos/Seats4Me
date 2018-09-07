@@ -15,12 +15,18 @@ using Xunit;
 
 namespace Seats4Me.API.Tests
 {
-    public class OnStageControllerTests
+    public class ShowsControllerTests
     {
+        private void Setup()
+        {
+            AutoMapper.Mapper.Initialize(cfg => cfg.AddProfile(new Seats4MeProfile()));
+        }
+
         [Fact]
         public async Task ListShowsWhenGetTheatre()
         {
             //Arrange
+            Setup();
             var showModels = new List<ShowOutputModel>()
             { new ShowOutputModel()
             {
@@ -36,7 +42,7 @@ namespace Seats4Me.API.Tests
             var result = await shows.GetAsync();
             //Assert
             var okResult = Assert.IsAssignableFrom<OkObjectResult>(result);
-            var listShows = Assert.IsAssignableFrom<IEnumerable<TimeSlotShow>>(okResult.Value);
+            var listShows = Assert.IsAssignableFrom<IEnumerable<ShowOutputModel>>(okResult.Value);
             Assert.True(listShows.Any());
         }
 

@@ -1,30 +1,34 @@
-﻿using System.Threading.Tasks;
+﻿using System.Net;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Seats4Me.API.Repositories;
 using Seats4Me.Data.Model;
+using Seats4Me.API.Models.Input;
+using Seats4Me.API.Services;
 
 namespace Seats4Me.API.Controllers
 {
     [Route("api/[controller]")]
     public class LoginController : Controller
     {
-        private readonly UsersRepository _repository;
-        private readonly IConfiguration _configuration;
+        private readonly IUsersService _service;
 
-        public LoginController(UsersRepository repository, IConfiguration configuration)
+        public LoginController(IUsersService service)
         {
-            _repository = repository;
-            _configuration = configuration;
+            _service = service;
         }
 
         [HttpPost]
-        public async Task<IActionResult> PostAsync([FromBody] Seats4MeUser user)
+        [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        public async Task<IActionResult> PostAsync([FromBody] LoginInputModel user)
         {
-            var authUser = await _repository.GetAuthenticatedUserAsync(user.Email, user.Password);
-            if (authUser == null)
-                return Unauthorized();
-            return Ok(_repository.GetToken(authUser, _configuration["Signing:Key"], _configuration["Signing:Issuer"]));
+            var token = await _service.GetTokenAsync(user);
+            if (token == null)
+                return BadRequest();
+
+            return Ok(token);
         }
     }
 }

@@ -50,7 +50,11 @@ namespace Seats4Me.API.Services
             show = await _showsRepository.UpdateAsync(show);
 
             return Mapper.Map<ShowOutputModel>(show);
+        }
 
+        public async Task<bool> DeleteAsync(int id)
+        {
+            return await _showsRepository.DeleteAsync(id);
         }
     }
 }

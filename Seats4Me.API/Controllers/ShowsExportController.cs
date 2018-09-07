@@ -6,13 +6,13 @@ using Seats4Me.Data.Model;
 
 namespace Seats4Me.API.Controllers
 {
-    [Route("api/admin/show")]
+    [Route("api/[controller]")]
     [Authorize(Policy = "Administrator")]
-    public class AdminShowController : Controller
+    public class ShowsExportController : Controller
     {
         private readonly ShowsRepository _repository;
 
-        public AdminShowController(ShowsRepository repository)
+        public ShowsExportController(ShowsRepository repository)
         {
             _repository = repository;
         }

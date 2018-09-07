@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Seats4Me.Data.Model;
+using TimeSlot = Seats4Me.API.Models.Input.TimeSlot;
 
 namespace Seats4Me.API.Repositories
 {

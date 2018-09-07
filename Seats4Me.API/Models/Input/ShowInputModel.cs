@@ -9,5 +9,6 @@ namespace Seats4Me.API.Models.Input
         public string Description { get; set; }
         public decimal RegularPrice { get; set; }
         public decimal RegularDiscountPrice { get; set; }
+        public ICollection<TimeSlotInputModel> TimeSlots { get; set; } = new List<TimeSlotInputModel>();
     }
 }
