@@ -17,10 +17,16 @@ namespace Seats4Me.API.Repositories
         {
         }
 
+        public Task<Seats4MeUser> GetUserAsync(string email)
+        {
+            return _context.Seats4MeUsers.FirstOrDefaultAsync(u =>
+                u.Email.Equals(email.ToLower()));
+        }
+
         public async Task<Seats4MeUser> GetAuthenticatedUserAsync(string email, string password)
         {
             return await _context.Seats4MeUsers.FirstOrDefaultAsync(u =>
-                    u.Email.Equals(email.ToLower()) && u.Password.Equals(password));
+                u.Email.Equals(email.ToLower()) && u.Password.Equals(password));
         }
 
         public string GetToken(Seats4MeUser user, string jwtKey, string jwtIssuer)
@@ -34,17 +40,14 @@ namespace Seats4Me.API.Repositories
                 new Claim(JwtRegisteredClaimNames.Email, user.Email)
             };
 
-            foreach (var role in user.Roles.Split(','))
-            {
-                claims.Add(new Claim(role.InitCap(), "True"));
-            }
+            foreach (var role in user.Roles.Split(',')) claims.Add(new Claim(role.InitCap(), "True"));
 
             var token = new JwtSecurityToken(jwtIssuer,
                 jwtIssuer,
                 expires: DateTime.Now.AddMinutes(30),
                 signingCredentials: creds,
-                claims:claims
-                );
+                claims: claims
+            );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }

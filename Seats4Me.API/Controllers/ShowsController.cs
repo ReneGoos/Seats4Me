@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Seats4Me.API.Models.Output;
 using Seats4Me.API.Models.Input;
+using Seats4Me.API.Models.Search;
 using Seats4Me.API.Repositories;
 using Seats4Me.API.Services;
 using Seats4Me.Data.Common;
@@ -26,9 +27,9 @@ namespace Seats4Me.API.Controllers
         // GET api/shows
         [HttpGet]
         [ProducesResponseType(typeof(List<ShowOutputModel>), (int)HttpStatusCode.OK)]
-        public async Task<IActionResult> GetAsync()
+        public async Task<IActionResult> GetAsync(ShowSearchModel searchModel)
         {
-            var showModels = await _showsService.GetAsync();
+            var showModels = await _showsService.GetAsync(searchModel);
 
             return Ok(showModels);
         }
@@ -48,7 +49,7 @@ namespace Seats4Me.API.Controllers
         }
 
         // POST api/show
-        [Authorize(Policy = "Administrator")]
+        [Authorize(Policy = "Contributor")]
         [HttpPost]
         [ProducesResponseType(typeof(ShowOutputModel), (int)HttpStatusCode.Created)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
@@ -57,7 +58,7 @@ namespace Seats4Me.API.Controllers
             if (value == null)
                 return BadRequest();
 
-            var result = await _showsService.CreateAsync(value);
+            var result = await _showsService.AddAsync(value);
             if (result == null)
                 return BadRequest();
             //return Ok(result);
@@ -66,7 +67,7 @@ namespace Seats4Me.API.Controllers
         }
 
         // PUT api/show/5
-        [Authorize(Policy = "Administrator")]
+        [Authorize(Policy = "Contributor")]
         [HttpPut("{id}")]
         [ProducesResponseType(typeof(ShowOutputModel), (int)HttpStatusCode.Created)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
@@ -81,7 +82,7 @@ namespace Seats4Me.API.Controllers
             return Ok(result);
         }
 
-        [Authorize(Policy = "Administrator")]
+        [Authorize(Policy = "Contributor")]
         // DELETE api/admin/show/5
         [HttpDelete("{id}")]
         [ProducesResponseType((int)HttpStatusCode.OK)]

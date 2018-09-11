@@ -1,30 +1,43 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Seats4Me.Data.Model;
-using TimeSlot = Seats4Me.API.Models.Input.TimeSlot;
 
 namespace Seats4Me.API.Repositories
 {
-    public class TimeSlotsRepository : TheatreRepository
+    public class TimeSlotsRepository : TheatreRepository, ITimeSlotsRepository
     {
         public TimeSlotsRepository(TheatreContext context) : base(context)
         {
         }
+        public Task<List<TimeSlot>> GetAsync()
+        {
+            return _context.TimeSlots.ToListAsync();
+        }
 
-        public async Task<int> AddAsync(TimeSlot value)
+        public Task<TimeSlot> GetAsync(int showId)
+        {
+            return _context.TimeSlots.SingleOrDefaultAsync(s => s.Id == showId);
+        }
+
+        public async Task<TimeSlot> AddAsync(TimeSlot value)
         {
             var timeSlot = await _context.TimeSlots.AddAsync(value);
             if (!await SaveChangesAsync())
-                return -1;
+                return null;
 
-            return timeSlot.Entity.Id;
+            return timeSlot.Entity;
         }
 
-        public async Task<bool> UpdateAsync(TimeSlot value)
+        public async Task<TimeSlot> UpdateAsync(TimeSlot value)
         {
             LastErrorMessage = "";
             _context.TimeSlots.Attach(value);
-            _context.TimeSlots.Update(value);
-            return await SaveChangesAsync();
+            var timeSlotEntity = _context.TimeSlots.Update(value);
+            if (!await SaveChangesAsync())
+                return null;
+
+            return timeSlotEntity.Entity;
         }
 
 

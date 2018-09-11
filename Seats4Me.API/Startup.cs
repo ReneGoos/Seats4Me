@@ -15,18 +15,14 @@ using Microsoft.IdentityModel.Tokens;
 using Seats4Me.API.Models;
 using AutoMapper;
 using Seats4Me.API.Services;
-using Seats4MeUser = Seats4Me.API.Models.Input.Seats4MeUser;
-using TimeSlot = Seats4Me.API.Models.Input.TimeSlot;
 
 namespace Seats4Me.API
 {
     public class Startup
     {
-        private readonly IHostingEnvironment _env;
 
-        public Startup(IConfiguration configuration, IHostingEnvironment env)
+        public Startup(IConfiguration configuration)
         {
-            _env = env;
             Configuration = configuration;
         }
 
@@ -46,13 +42,15 @@ namespace Seats4Me.API
                 options.UseSqlServer(conn)
                         .EnableSensitiveDataLogging());
 
-            services.AddScoped<IShowsRepository, ShowsRepository>();
             services.AddScoped<IShowsService, ShowsService>();
+            services.AddScoped<ITicketsService, TicketsService>();
+            services.AddScoped<ITimeSlotsService, TimeSlotsService>();
+            services.AddScoped<IUsersService, UsersService>();
 
-            services.AddTransient<ShowsRepository, ShowsRepository>();
-            services.AddTransient<TicketsRepository, TicketsRepository>();
-            services.AddTransient<TimeSlotsRepository, TimeSlotsRepository>();
-            services.AddTransient<UsersRepository, UsersRepository>();
+            services.AddScoped<IShowsRepository, ShowsRepository>();
+            services.AddScoped<ITimeSlotsRepository, TimeSlotsRepository>();
+            services.AddScoped<ITimeSlotSeatsRepository, TimeSlotSeatsRepository>();
+            services.AddScoped<IUsersRepository, UsersRepository>();
 
             SecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Signing:Key"]));
 
@@ -107,7 +105,8 @@ namespace Seats4Me.API
 
             services.AddAuthorization(cfg =>
             {
-                cfg.AddPolicy("Administrator", p => p.RequireClaim("Administrator", "True"));
+                cfg.AddPolicy("Owner", p => p.RequireClaim("Owner", "True"));
+                cfg.AddPolicy("Contributor", p => p.RequireClaim("Contributor", "True"));
                 cfg.AddPolicy("Customer", p => p.RequireClaim("Customer", "True"));
             });
 
@@ -176,30 +175,29 @@ namespace Seats4Me.API
                 {
                     new Seats4MeUser()
                     {
-                        Email = "admin@seats4me.com",
-                        Name = "Admin",
-                        Roles = "administrator,customer",
-                        Password = "password"
-                    },
-                    new Seats4MeUser()
-                    {
-                        Email = "rene.goossens@glencore.com",
-                        Name = "René Goossens",
-                        Roles = "customer",
-                        Password = "password"
-                    },
-                    new Seats4MeUser()
-                    {
                         Email = "guest@seats4me.com",
                         Name = "Guest",
                         Roles = "guest",
                         Password = "password"
                     },
-
+                    new Seats4MeUser()
+                    {
+                        Email = "admin@seats4me.com",
+                        Name = "Admin",
+                        Roles = "owner,contributor,customer",
+                        Password = "password"
+                    },
                     new Seats4MeUser()
                     {
                         Email = "rene@seats4me.com",
                         Name = "René",
+                        Roles = "contributor,customer",
+                        Password = "password"
+                    },
+                    new Seats4MeUser()
+                    {
+                        Email = "manuel@seats4me.com",
+                        Name = "Manuel",
                         Roles = "customer",
                         Password = "password"
                     }
@@ -217,6 +215,11 @@ namespace Seats4Me.API
                 RegularDiscountPrice = 15.0M,
                 TimeSlots = new List<TimeSlot>()
                 {
+                    new TimeSlot()
+                    {
+                        Day = dateTimeEvening.AddDays(-7),
+                        Hours = 2
+                    },
                     new TimeSlot()
                     {
                         Day = dateTimeEvening,
@@ -301,7 +304,7 @@ namespace Seats4Me.API
                 {
                     SeatId = seat.Id,
                     TimeSlotId = timeSlot.Id,
-                    Seats4MeUserId = user.Id,
+                    Seats4MeUserId = user?.Id ?? -1,
                     Paid = true,
                     Price = 15
                 });

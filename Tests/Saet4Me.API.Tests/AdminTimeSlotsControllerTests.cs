@@ -25,7 +25,7 @@ namespace Seats4Me.API.Tests
 
             var showId = show.Entity.Id;
             var timeSlotsRepository = new TimeSlotsRepository(context);
-            var timeSlots = new Controllers.TimeSlotController(timeSlotsRepository);
+            var timeSlots = new Controllers.TimeSlotsController(timeSlotsRepository);
             //Act
             var result = await timeSlots.PostAsync(new TimeSlot()
             {
@@ -59,7 +59,7 @@ namespace Seats4Me.API.Tests
             var showId = show.Entity.Id;
             var timeSlotId = timeSlot.Entity.Id;
             var timeSlotsRepository = new TimeSlotsRepository(context);
-            var timeSlots = new Controllers.TimeSlotController(timeSlotsRepository);
+            var timeSlots = new Controllers.TimeSlotsController(timeSlotsRepository);
             //Act
             timeSlot.Entity.Hours = 2.5;
             var result = await timeSlots.PutAsync(timeSlotId, timeSlot.Entity);
@@ -89,7 +89,7 @@ namespace Seats4Me.API.Tests
             await context.SaveChangesAsync();
             var id = timeSlot.Entity.Id;
             var timeSlotsRepository = new TimeSlotsRepository(context);
-            var timeSlots = new Controllers.TimeSlotController(timeSlotsRepository);
+            var timeSlots = new Controllers.TimeSlotsController(timeSlotsRepository);
             //Act
             var result = await timeSlots.DeleteAsync(id);
             //Assert
@@ -104,7 +104,7 @@ namespace Seats4Me.API.Tests
             var context = TheatreContextInit.InitializeContextInMemoryDb(System.Reflection.MethodBase.GetCurrentMethod()
                 .DeclaringType.GUID.ToString());
             var timeSlotsRepository = new TimeSlotsRepository(context);
-            var timeSlots = new Controllers.TimeSlotController(timeSlotsRepository);
+            var timeSlots = new Controllers.TimeSlotsController(timeSlotsRepository);
             var id = -1;
             //Act
             var result = await timeSlots.DeleteAsync(id);

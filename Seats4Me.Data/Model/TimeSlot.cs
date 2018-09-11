@@ -5,11 +5,10 @@ using Seats4Me.Data.Common;
 
 namespace Seats4Me.Data.Model
 {
-    public class TimeSlot
+    public class TimeSlot : DataWithId
     {
         private DateTime _startDateTime;
 
-        public int Id { get; set; }
         public DateTime Day
         {
             get => _startDateTime;

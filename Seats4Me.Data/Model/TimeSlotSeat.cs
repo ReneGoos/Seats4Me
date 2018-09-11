@@ -2,9 +2,8 @@
 
 namespace Seats4Me.Data.Model
 {
-    public class TimeSlotSeat
+    public class TimeSlotSeat : DataWithId
     {
-        public int Id { get; set; }
         public int SeatId { get; set; }
         public int TimeSlotId { get; set; }
         public int Seats4MeUserId { get; set; }

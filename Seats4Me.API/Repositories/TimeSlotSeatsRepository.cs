@@ -3,17 +3,45 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Seats4Me.API.Models.Output;
+using Seats4Me.API.Models.Result;
 using Seats4Me.Data.Model;
 
 namespace Seats4Me.API.Repositories
 {
-    public class TicketsRepository : TheatreRepository
+    public class TimeSlotSeatsRepository: TheatreRepository, ITimeSlotSeatsRepository
     {
-        public TicketsRepository(TheatreContext context) : base(context)
+        public TimeSlotSeatsRepository(TheatreContext context) : base(context)
         {
         }
 
-        public async Task<IEnumerable<TicketOutputModel>> GetAsync(int timeSlotId)
+        public Task<TimeSlotSeat> AddAsync(TimeSlotSeat value)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public Task<bool> DeleteAsync(int ticketId)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public async Task<IEnumerable<TimeSlotSeat>> GetAsync(int? userId)
+        {
+            var timeSlotSeats = await _context.TimeSlotSeats.Where(tss => userId == null || tss.Seats4MeUserId == userId).ToListAsync();
+
+            return timeSlotSeats;
+        }
+
+        public Task<TimeSlotSeat> GetAsync(int ticketId)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public Task<TimeSlotSeat> UpdateAsync(TimeSlotSeat value)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public async Task<IEnumerable<TicketResult>> GetTicketsByTimeSlotAsync(int timeSlotId)
         {
             var timeSlot = await _context.TimeSlots.Include(t => t.Show)
                 .FirstOrDefaultAsync(s => s.Id == timeSlotId);
@@ -35,29 +63,17 @@ namespace Seats4Me.API.Repositories
                         t
                     }
                 )
-                .Select(s => new TicketOutputModel()
+                .Select(s => new TicketResult()
                     {
-                        ShowId = timeSlot.Show.Id,
-                        Name = timeSlot.Show.Name,
-                        Title = timeSlot.Show.Title,
-                        Description = timeSlot.Show.Description,
-                        RegularPrice = timeSlot.Show.RegularPrice,
-                        RegularDiscountPrice = timeSlot.Show.RegularDiscountPrice,
-                        PromoPrice = timeSlot.PromoPrice,
-                        SeatId = s.s.Id,
-                        Row = s.s.Row,
-                        Chair = s.s.Chair,
-                        TimeSlotId = timeSlot.Id,
-                        Start = timeSlot.Day,
-                        TimeSlotSeatId = s.t == null ? -1 : s.t.Id,
-                        Reserved = s.t != null && s.t.Reserved,
-                        Paid = s.t != null && s.t.Paid,
-                        Email = s.t == null ? null : _context.Seats4MeUsers.FirstOrDefault(u => u.Id == s.t.Seats4MeUserId).Email
+                        TimeSlot = timeSlot,
+                        TimeSlotSeat = s.t,
+                        Seat = s.s
                     }
                 )
                 .ToListAsync();
         }
 
+        /*
         public bool ValidTicketUser(int timeSlotSeatId, string email)
         {
             var ticket = _context.TimeSlotSeats.Include(t => t.Seats4MeUser).First(t => t.Id == timeSlotSeatId);
@@ -223,5 +239,6 @@ namespace Seats4Me.API.Repositories
                                 )
                                 .ToListAsync();
         }
+        */
     }
 }
