@@ -8,6 +8,7 @@ namespace Seats4Me.API.Services
 {
     public interface IShowsService
     {
+        Task<bool> ShowExistsAsync(int id);
         Task<IEnumerable<ShowOutputModel>> GetAsync(ShowSearchModel searchModel);
         Task<ShowOutputModel> GetAsync(int id);
         Task<ShowOutputModel> AddAsync(ShowInputModel showInput);

@@ -28,6 +28,11 @@ namespace Seats4Me.API.Services
             return shows;
         }
 
+        public async Task<bool> ShowExistsAsync(int id)
+        {
+            return (await _showsRepository.GetAsync(id) == null);
+        }
+
         public async Task<ShowOutputModel> GetAsync(int id)
         {
             var show = await _showsRepository.GetAsync(id);

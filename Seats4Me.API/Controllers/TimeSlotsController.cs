@@ -1,42 +1,72 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Net;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Seats4Me.API.Models.Input;
+using Seats4Me.API.Models.Output;
 using Seats4Me.API.Repositories;
 using Seats4Me.API.Services;
 
 namespace Seats4Me.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/shows/{showId}/[controller]")]
     public class TimeSlotsController : Controller
     {
         private readonly ITimeSlotsService _service;
+        private readonly IShowsService _showsService;
 
-        public TimeSlotsController(ITimeSlotsService service)
+        public TimeSlotsController(ITimeSlotsService service, IShowsService showsService)
         {
             _service = service;
+            _showsService = showsService;
         }
 
         // GET: api/timeSlots/5
-        [HttpGet("{timeSlotId}")]
-        public async Task<IActionResult> GetAsync(int timeSlotId)
+        [HttpGet]
+        [ProducesResponseType(typeof(List<TimeSlotOutputModel>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        public async Task<IActionResult> GetAsync(int showId)
         {
-            return Ok(await _service.GetAsync(timeSlotId));
+            if (!await _showsService.ShowExistsAsync(showId))
+                return NotFound();
+
+            return Ok(await _service.GetAsync(showId));
+        }
+        // GET: api/timeSlots/5
+        [HttpGet("{timeSlotId}")]
+        [ProducesResponseType(typeof(TimeSlotOutputModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        public async Task<IActionResult> GetAsync(int showId, int timeSlotId)
+        {
+            if (!await _showsService.ShowExistsAsync(showId))
+                return NotFound();
+
+            return Ok(await _service.GetAsync(showId, timeSlotId));
         }
 
         // GET: api/timeSlots/5/tickets
         [HttpGet("{timeSlotId}/tickets")]
-        public async Task<IActionResult> GetTicketsAsync(int timeSlotId)
+        [ProducesResponseType(typeof(List<TicketOutputModel>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        public async Task<IActionResult> GetTicketsAsync(int showId, int timeSlotId)
         {
-            return Ok(await _service.GetTicketsAsync(timeSlotId));
+            if (!await _showsService.ShowExistsAsync(showId))
+                return NotFound();
+
+            return Ok(await _service.GetTicketsAsync(showId, timeSlotId));
         }
 
         // POST api/admin/timeSlot
         [Authorize(Policy = "Contributor")]
         [HttpPost]
-        public async Task<IActionResult> PostAsync([FromBody]TimeSlotInputModel value)
+        [ProducesResponseType(typeof(TimeSlotOutputModel), (int)HttpStatusCode.OK)]
+        public async Task<IActionResult> PostAsync(int showId, [FromBody]TimeSlotInputModel value)
         {
-            var result = await _service.AddAsync(value);
+            if (!await _showsService.ShowExistsAsync(showId))
+                return BadRequest();
+
+            var result = await _service.AddAsync(showId, value);
             if (result == null)
                 return BadRequest();
             return Ok(result);
@@ -45,9 +75,12 @@ namespace Seats4Me.API.Controllers
         // PUT api/admin/timeSlot/5
         [Authorize(Policy = "Contributor")]
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutAsync(int id, [FromBody]TimeSlotInputModel value)
+        public async Task<IActionResult> PutAsync(int showId, int id, [FromBody]TimeSlotInputModel value)
         {
-            var result = await _service.UpdateAsync(id, value);
+            if (!await _showsService.ShowExistsAsync(showId))
+                return BadRequest();
+
+            var result = await _service.UpdateAsync(showId, id, value);
             if (result == null)
                 return BadRequest();
             return Ok();
@@ -56,9 +89,12 @@ namespace Seats4Me.API.Controllers
         // DELETE api/admin/timeSlot/5
         [Authorize(Policy = "Contributor")]
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteAsync(int id)
+        public async Task<IActionResult> DeleteAsync(int showId, int id)
         {
-            if (!await _service.DeleteAsync(id))
+            if (!await _showsService.ShowExistsAsync(showId))
+                return BadRequest();
+
+            if (!await _service.DeleteAsync(showId, id))
                 return BadRequest();
             return Ok();
         }

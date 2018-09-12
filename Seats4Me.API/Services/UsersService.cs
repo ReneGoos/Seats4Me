@@ -10,10 +10,10 @@ namespace Seats4Me.API.Services
 {
     public class UsersService : IUsersService
     {
-        private readonly UsersRepository _repository;
+        private readonly IUsersRepository _repository;
         private readonly IConfiguration _configuration;
 
-        public UsersService(UsersRepository repository, IConfiguration configuration)
+        public UsersService(IUsersRepository repository, IConfiguration configuration)
         {
             _repository = repository;
             _configuration = configuration;

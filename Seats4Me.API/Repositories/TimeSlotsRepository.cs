@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Seats4Me.Data.Model;
@@ -10,14 +11,14 @@ namespace Seats4Me.API.Repositories
         public TimeSlotsRepository(TheatreContext context) : base(context)
         {
         }
-        public Task<List<TimeSlot>> GetAsync()
+        public Task<List<TimeSlot>> GetAsync(int showId)
         {
-            return _context.TimeSlots.ToListAsync();
+            return _context.TimeSlots.Where(ts => ts.ShowId == showId).ToListAsync();
         }
 
-        public Task<TimeSlot> GetAsync(int showId)
+        public Task<TimeSlot> GetAsync(int showId, int id)
         {
-            return _context.TimeSlots.SingleOrDefaultAsync(s => s.Id == showId);
+            return _context.TimeSlots.FirstOrDefaultAsync(s => s.Id == id && s.ShowId == showId);
         }
 
         public async Task<TimeSlot> AddAsync(TimeSlot value)
@@ -32,8 +33,8 @@ namespace Seats4Me.API.Repositories
         public async Task<TimeSlot> UpdateAsync(TimeSlot value)
         {
             LastErrorMessage = "";
-            _context.TimeSlots.Attach(value);
-            var timeSlotEntity = _context.TimeSlots.Update(value);
+            var timeSlotEntity = _context.TimeSlots.Attach(value);
+            _context.TimeSlots.Update(value);
             if (!await SaveChangesAsync())
                 return null;
 
