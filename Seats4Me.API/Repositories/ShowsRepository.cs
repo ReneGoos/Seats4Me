@@ -23,6 +23,7 @@ namespace Seats4Me.API.Repositories
                     (lastDay == null || ts.Day <= lastDay) && (!onlyPromo || ts.PromoPrice > 0)))
                 .Select(s => new Show
                 {
+                    Id = s.Id,
                     Name = s.Name,
                     Title = s.Title,
                     Description = s.Description,
@@ -30,7 +31,7 @@ namespace Seats4Me.API.Repositories
                     RegularDiscountPrice = s.RegularDiscountPrice,
                     TimeSlots = s.TimeSlots.Where(ts =>
                         (firstDay == null || ts.Day >= firstDay) &&
-                        (lastDay == null || ts.Day <= lastDay) && (!onlyPromo || ts.PromoPrice > 0)).ToList()
+                        (lastDay == null || ts.Day < lastDay) && (!onlyPromo || ts.PromoPrice > 0)).ToList()
                 })
                 .ToListAsync();
 
@@ -58,7 +59,7 @@ namespace Seats4Me.API.Repositories
             LastErrorMessage = "";
             _context.Shows.Attach(value);
             var showEntity = _context.Shows.Update(value);
-            if (await SaveChangesAsync())
+            if (!await SaveChangesAsync())
                 return null;
 
             return showEntity.Entity;

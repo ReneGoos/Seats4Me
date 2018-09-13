@@ -21,11 +21,16 @@ namespace Seats4Me.API.Services
             _usersRepository = usersRepository;
         }
 
-        public async Task<List<TicketOutputModel>> GetAsync(string email = null)
+        public async Task<List<TicketOutputModel>> GetAsync(int? showId = null, int? timeSlotId = null, string email = null)
         {
-            var user = ValidateUser(email);
+            var userId = (int?) null;
+            if (email != null)
+            {
+                var user = ValidateUser(email);
+                userId = user?.Id;
+            }
 
-            var tickets = await _timeSlotSeatsRepository.GetAsync(user?.Id);
+            var tickets = await _timeSlotSeatsRepository.GetAsync(showId, timeSlotId, userId);
 
             return Mapper.Map<List<TicketOutputModel>>(tickets);
         }

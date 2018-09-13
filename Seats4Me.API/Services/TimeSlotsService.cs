@@ -65,10 +65,5 @@ namespace Seats4Me.API.Services
         {
             return await _timeSlotsRepository.DeleteAsync(id);
         }
-
-        public async Task<TicketOutputModel> GetTicketsAsync(int showId, int timeSlotId)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

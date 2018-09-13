@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Seats4Me.API.Models.Search;
-using Seats4Me.Data.Common;
+using Seats4Me.API.Common;
 
 namespace Seats4Me.API.Services
 {
@@ -30,7 +30,7 @@ namespace Seats4Me.API.Services
 
         public async Task<bool> ShowExistsAsync(int id)
         {
-            return (await _showsRepository.GetAsync(id) == null);
+            return (await _showsRepository.GetAsync(id) != null);
         }
 
         public async Task<ShowOutputModel> GetAsync(int id)
@@ -71,32 +71,17 @@ namespace Seats4Me.API.Services
 
             if (searchModel.Week != 0)
             {
-                if (searchModel.Year == 0) searchModel.Year = today.Year;
-
                 start = DateTimeExtensions.FirstDayOfWeek(searchModel.Week, searchModel.Year);
                 end = start.AddDays(7);
             }
             else if (searchModel.Month != 0)
             {
-                if (searchModel.Year == 0) searchModel.Year = today.Year;
-
                 start = new DateTime(searchModel.Year, searchModel.Month, 1);
                 end = new DateTime(searchModel.Year, searchModel.Month + 1, 1);
             }
             else
             {
-                if (searchModel.Year == 0)
-                {
-                    searchModel.Year = today.Year;
-                }
-                else
-                {
-                    if (searchModel.Year > 0 && searchModel.Year < 100)
-                        searchModel.Year = searchModel.Year + 2000;
-
-                    start = new DateTime(searchModel.Year, 1, 1);
-                }
-
+                start = new DateTime(searchModel.Year, 1, 1);
                 end = new DateTime(searchModel.Year + 1, 1, 1);
             }
 

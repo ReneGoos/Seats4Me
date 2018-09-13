@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Net;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Seats4Me.API.Repositories;
@@ -19,10 +20,15 @@ namespace Seats4Me.API.Controllers
 
         //GET api/admin/show/export
         [HttpGet("export")]
-        public async Task<string> Export()
+        [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        public async Task<IActionResult> Export()
         {
             var showsExport = await _repository.GetExport();
-            return showsExport;
+            if (showsExport == null)
+                return NotFound();
+
+            return Ok(showsExport);
         }
     }
 }

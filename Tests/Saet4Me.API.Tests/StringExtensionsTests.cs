@@ -1,7 +1,7 @@
-﻿using Seats4Me.Data.Common;
+﻿using Seats4Me.API.Common;
 using Xunit;
 
-namespace Seats4Me.Data.Tests
+namespace Seats4Me.API.Tests
 {
     public class StringExtensionsTests
     {

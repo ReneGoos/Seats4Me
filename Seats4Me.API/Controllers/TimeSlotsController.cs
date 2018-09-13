@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Seats4Me.API.Models.Input;
 using Seats4Me.API.Models.Output;
-using Seats4Me.API.Repositories;
 using Seats4Me.API.Services;
 
 namespace Seats4Me.API.Controllers
@@ -54,7 +53,7 @@ namespace Seats4Me.API.Controllers
             if (!await _showsService.ShowExistsAsync(showId))
                 return NotFound();
 
-            return Ok(await _service.GetTicketsAsync(showId, timeSlotId));
+            return Ok(await _service.GetAsync(showId, timeSlotId));
         }
 
         // POST api/admin/timeSlot

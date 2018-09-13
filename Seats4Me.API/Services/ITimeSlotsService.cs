@@ -12,6 +12,5 @@ namespace Seats4Me.API.Services
         Task<TimeSlotOutputModel> AddAsync(int showId, TimeSlotInputModel timeSlotInput);
         Task<TimeSlotOutputModel> UpdateAsync(int showId, int id, TimeSlotInputModel timeSlotInput);
         Task<bool> DeleteAsync(int showId, int id);
-        Task<TicketOutputModel> GetTicketsAsync(int showId, int timeSlotId);
     }
 }

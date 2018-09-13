@@ -10,7 +10,7 @@ using Seats4Me.API.Models.Input;
 using Seats4Me.API.Models.Search;
 using Seats4Me.API.Repositories;
 using Seats4Me.API.Services;
-using Seats4Me.Data.Common;
+using Seats4Me.API.Common;
 
 namespace Seats4Me.API.Controllers
 {
@@ -61,7 +61,6 @@ namespace Seats4Me.API.Controllers
             var result = await _showsService.AddAsync(value);
             if (result == null)
                 return BadRequest();
-            //return Ok(result);
 
             return CreatedAtRoute("GetAsync", new { id = result.Id }, result);
         }
@@ -85,13 +84,14 @@ namespace Seats4Me.API.Controllers
         [Authorize(Policy = "Contributor")]
         // DELETE api/admin/show/5
         [HttpDelete("{id}")]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NoContent)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> DeleteAsync(int id)
         {
             if (!await _showsService.DeleteAsync(id))
                 return BadRequest();
-            return Ok();
+
+            return NoContent();
         }
 
         /*

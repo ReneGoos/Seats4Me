@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
-using Seats4Me.Data.Common;
+using Seats4Me.API.Common;
 using Xunit;
 
 namespace Seats4Me.API.Tests

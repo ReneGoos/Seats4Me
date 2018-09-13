@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Seats4Me.Data.Common
+namespace Seats4Me.API.Common
 {
     public static class StringExtensions
     {

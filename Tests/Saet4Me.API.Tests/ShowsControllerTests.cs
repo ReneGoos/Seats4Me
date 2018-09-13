@@ -9,7 +9,7 @@ using Seats4Me.API.Models;
 using Seats4Me.API.Models.Output;
 using Seats4Me.API.Repositories;
 using Seats4Me.API.Services;
-using Seats4Me.Data.Common;
+using Seats4Me.API.Common;
 using Seats4Me.Data.Model;
 using Xunit;
 

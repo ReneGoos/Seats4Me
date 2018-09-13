@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Seats4Me.Data.Common;
+using Seats4Me.API.Common;
 using Seats4Me.Data.Model;
 
 namespace Seats4Me.API.Repositories
@@ -20,13 +20,13 @@ namespace Seats4Me.API.Repositories
         public Task<Seats4MeUser> GetUserAsync(string email)
         {
             return _context.Seats4MeUsers.FirstOrDefaultAsync(u =>
-                u.Email.Equals(email.ToLower()));
+                u.Email.Equals(email, StringComparison.InvariantCultureIgnoreCase));
         }
 
         public async Task<Seats4MeUser> GetAuthenticatedUserAsync(string email, string password)
         {
             return await _context.Seats4MeUsers.FirstOrDefaultAsync(u =>
-                u.Email.Equals(email.ToLower()) && u.Password.Equals(password));
+                u.Email.Equals(email, StringComparison.InvariantCultureIgnoreCase) && u.Password.Equals(password));
         }
 
         public string GetToken(Seats4MeUser user, string jwtKey, string jwtIssuer)

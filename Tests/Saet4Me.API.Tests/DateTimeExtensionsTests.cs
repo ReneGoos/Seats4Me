@@ -1,8 +1,8 @@
 ﻿using System;
-using Seats4Me.Data.Common;
+using Seats4Me.API.Common;
 using Xunit;
 
-namespace Seats4Me.Data.Tests
+namespace Seats4Me.API.Tests
 {
     public class DateTimeExtensionsTests
     {
@@ -61,6 +61,19 @@ namespace Seats4Me.Data.Tests
             var firstDay = DateTimeExtensions.FirstDayOfWeek(week, day.Year);
             //Assert
             Assert.True(firstDay <= day);
+        }
+
+        [Fact]
+        public void LastDayInWeek()
+        {
+            //Arrange
+            var day = new DateTime(2018, 9, 23);
+            var week = day.Week();
+            //Act
+            var firstDay = DateTimeExtensions.FirstDayOfWeek(week, day.Year);
+            //Assert
+            Assert.True(firstDay <= day);
+            Assert.True(firstDay.AddDays(7) > day);
         }
     }
 }

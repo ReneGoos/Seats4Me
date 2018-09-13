@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Globalization;
 
-namespace Seats4Me.Data.Common
+namespace Seats4Me.API.Common
 {
     public static class DateTimeExtensions
     {
@@ -17,7 +17,7 @@ namespace Seats4Me.Data.Common
         {
             var firstDay = new DateTime(year, 1, 1);
             var addWeeks = week + (firstDay.Week() == 1 ? -1: 0);
-            firstDay = firstDay.AddDays(-(int) firstDay.DayOfWeek);
+            firstDay = firstDay.AddDays(1 -(int) firstDay.DayOfWeek);
             return firstDay.AddDays(addWeeks * 7);
         }
     }

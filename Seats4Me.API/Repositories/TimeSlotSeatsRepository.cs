@@ -1,14 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Seats4Me.API.Models.Output;
 using Seats4Me.API.Models.Result;
 using Seats4Me.Data.Model;
 
 namespace Seats4Me.API.Repositories
 {
-    public class TimeSlotSeatsRepository: TheatreRepository, ITimeSlotSeatsRepository
+    public class TimeSlotSeatsRepository : TheatreRepository, ITimeSlotSeatsRepository
     {
         public TimeSlotSeatsRepository(TheatreContext context) : base(context)
         {
@@ -16,29 +16,40 @@ namespace Seats4Me.API.Repositories
 
         public Task<TimeSlotSeat> AddAsync(TimeSlotSeat value)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         public Task<bool> DeleteAsync(int ticketId)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
-        public async Task<IEnumerable<TimeSlotSeat>> GetAsync(int? userId)
+        public async Task<IEnumerable<TimeSlotSeat>> GetAsync(int? showId = null, int? timeSlotId = null,
+            int? userId = null)
         {
-            var timeSlotSeats = await _context.TimeSlotSeats.Where(tss => userId == null || tss.Seats4MeUserId == userId).ToListAsync();
+            var timeSlotSeats = await _context.TimeSlotSeats.Where(tss =>
+                showId == null || tss.TimeSlot.ShowId == showId || timeSlotId == null || tss.TimeSlotId == timeSlotId ||
+                userId == null || tss.Seats4MeUserId == userId).ToListAsync();
 
             return timeSlotSeats;
         }
 
         public Task<TimeSlotSeat> GetAsync(int ticketId)
         {
-            throw new System.NotImplementedException();
+            var timeSlotSeat = _context.TimeSlotSeats.FirstOrDefaultAsync(tss => tss.Id == ticketId);
+
+            return timeSlotSeat;
         }
 
-        public Task<TimeSlotSeat> UpdateAsync(TimeSlotSeat value)
+        public async Task<TimeSlotSeat> UpdateAsync(TimeSlotSeat value)
         {
-            throw new System.NotImplementedException();
+            LastErrorMessage = "";
+            _context.TimeSlotSeats.Attach(value);
+            var timeSlotSeatEntity = _context.TimeSlotSeats.Update(value);
+            if (!await SaveChangesAsync())
+                return null;
+
+            return timeSlotSeatEntity.Entity;
         }
 
         public async Task<IEnumerable<TicketResult>> GetTicketsByTimeSlotAsync(int timeSlotId)
@@ -63,7 +74,7 @@ namespace Seats4Me.API.Repositories
                         t
                     }
                 )
-                .Select(s => new TicketResult()
+                .Select(s => new TicketResult
                     {
                         TimeSlot = timeSlot,
                         TimeSlotSeat = s.t,

@@ -9,7 +9,7 @@ namespace Seats4Me.API.Models.Search
     {
         public int Week { get; set; }
         public int Month { get; set; }
-        public int Year { get; set; }
-        public bool Promotion { get; set; }
+        public int Year { get; set; } = DateTime.Today.Year;
+        public bool Promotion { get; set; } = false;
     }
 }

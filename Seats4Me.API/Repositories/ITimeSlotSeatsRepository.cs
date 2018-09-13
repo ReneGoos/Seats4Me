@@ -10,7 +10,7 @@ namespace Seats4Me.API.Repositories
     {
         Task<TimeSlotSeat> AddAsync(TimeSlotSeat value);
         Task<bool> DeleteAsync(int ticketId);
-        Task<IEnumerable<TimeSlotSeat>> GetAsync(int? userId);
+        Task<IEnumerable<TimeSlotSeat>> GetAsync(int? showId = null, int? timeSlotId = null, int? userId = null);
         Task<TimeSlotSeat> GetAsync(int ticketId);
         Task<TimeSlotSeat> UpdateAsync(TimeSlotSeat value);
         Task<IEnumerable<TicketResult>> GetTicketsByTimeSlotAsync(int timeSlotId);
