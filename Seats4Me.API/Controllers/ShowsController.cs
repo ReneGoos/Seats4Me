@@ -1,16 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
-using AutoMapper;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Seats4Me.API.Models.Output;
+
 using Seats4Me.API.Models.Input;
+using Seats4Me.API.Models.Output;
 using Seats4Me.API.Models.Search;
-using Seats4Me.API.Repositories;
 using Seats4Me.API.Services;
-using Seats4Me.API.Common;
 
 namespace Seats4Me.API.Controllers
 {
@@ -22,6 +20,18 @@ namespace Seats4Me.API.Controllers
         public ShowsController(IShowsService showsService)
         {
             _showsService = showsService;
+        }
+
+        [Authorize(Policy = "Contributor")]
+
+        // DELETE api/admin/show/5
+        [HttpDelete("{id}")]
+        [ProducesResponseType((int)HttpStatusCode.NoContent)]
+        public async Task<IActionResult> DeleteAsync(int id)
+        {
+            await _showsService.DeleteAsync(id);
+
+            return NoContent();
         }
 
         // GET api/shows
@@ -43,7 +53,9 @@ namespace Seats4Me.API.Controllers
             var showModel = await _showsService.GetAsync(id);
 
             if (showModel == null)
+            {
                 return NotFound();
+            }
 
             return Ok(showModel);
         }
@@ -52,46 +64,49 @@ namespace Seats4Me.API.Controllers
         [Authorize(Policy = "Contributor")]
         [HttpPost]
         [ProducesResponseType(typeof(ShowOutputModel), (int)HttpStatusCode.Created)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        public async Task<IActionResult> PostAsync([FromBody]ShowInputModel value)
+        [ProducesResponseType(typeof(string), (int)HttpStatusCode.BadRequest)]
+        public async Task<IActionResult> PostAsync([FromBody] ShowInputModel value)
         {
             if (value == null)
-                return BadRequest();
+            {
+                return BadRequest("Invalid input");
+            }
 
             var result = await _showsService.AddAsync(value);
-            if (result == null)
-                return BadRequest();
 
-            return CreatedAtRoute("GetAsync", new { id = result.Id }, result);
+            if (result == null)
+            {
+                return BadRequest("Show not inserted");
+            }
+
+            return CreatedAtRoute("GetAsync",
+                                  new
+                                  {
+                                      id = result.Id
+                                  },
+                                  result);
         }
 
         // PUT api/show/5
         [Authorize(Policy = "Contributor")]
         [HttpPut("{id}")]
         [ProducesResponseType(typeof(ShowOutputModel), (int)HttpStatusCode.Created)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        public async Task<IActionResult> PutAsync(int id, [FromBody]ShowInputModel value)
+        [ProducesResponseType(typeof(string), (int)HttpStatusCode.BadRequest)]
+        public async Task<IActionResult> PutAsync(int id, [FromBody] ShowInputModel value)
         {
             if (value == null)
-                return BadRequest();
+            {
+                return BadRequest("Invalid input");
+            }
 
             var result = await _showsService.UpdateAsync(id, value);
+
             if (result == null)
-                return BadRequest();
+            {
+                return BadRequest($"Update of show {id} failed");
+            }
+
             return Ok(result);
-        }
-
-        [Authorize(Policy = "Contributor")]
-        // DELETE api/admin/show/5
-        [HttpDelete("{id}")]
-        [ProducesResponseType((int)HttpStatusCode.NoContent)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        public async Task<IActionResult> DeleteAsync(int id)
-        {
-            if (!await _showsService.DeleteAsync(id))
-                return BadRequest();
-
-            return NoContent();
         }
 
         /*

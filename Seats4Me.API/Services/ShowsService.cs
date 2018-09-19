@@ -1,14 +1,15 @@
-﻿using AutoMapper;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+using AutoMapper;
+
+using Seats4Me.API.Common;
 using Seats4Me.API.Models.Input;
 using Seats4Me.API.Models.Output;
+using Seats4Me.API.Models.Search;
 using Seats4Me.API.Repositories;
 using Seats4Me.Data.Model;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Seats4Me.API.Models.Search;
-using Seats4Me.API.Common;
 
 namespace Seats4Me.API.Services
 {
@@ -21,6 +22,32 @@ namespace Seats4Me.API.Services
             _showsRepository = showsRepository;
         }
 
+        public async Task<ShowOutputModel> AddAsync(ShowInputModel showInput)
+        {
+            var show = Mapper.Map<Show>(showInput);
+
+            show = await _showsRepository.AddAsync(show);
+
+            return Mapper.Map<ShowOutputModel>(show);
+        }
+
+        public async Task DeleteAsync(int id)
+        {
+            var show = await _showsRepository.GetAsync(id);
+
+            if (show == null)
+            {
+                return;
+            }
+
+            await _showsRepository.DeleteAsync(show);
+        }
+
+        public async Task<bool> ExistsAsync(int id)
+        {
+            return await _showsRepository.GetAsync(id) != null;
+        }
+
         public async Task<IEnumerable<ShowOutputModel>> GetAsync(ShowSearchModel searchModel)
         {
             var shows = await GetOnPeriodAsync(searchModel);
@@ -28,23 +55,9 @@ namespace Seats4Me.API.Services
             return shows;
         }
 
-        public async Task<bool> ShowExistsAsync(int id)
-        {
-            return (await _showsRepository.GetAsync(id) != null);
-        }
-
         public async Task<ShowOutputModel> GetAsync(int id)
         {
             var show = await _showsRepository.GetAsync(id);
-
-            return Mapper.Map<ShowOutputModel>(show);
-        }
-
-        public async Task<ShowOutputModel> AddAsync(ShowInputModel showInput)
-        {
-            var show = Mapper.Map<Show>(showInput);
-
-            show = await _showsRepository.AddAsync(show);
 
             return Mapper.Map<ShowOutputModel>(show);
         }
@@ -59,14 +72,14 @@ namespace Seats4Me.API.Services
             return Mapper.Map<ShowOutputModel>(show);
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public Task<string> GetExportAsync()
         {
-            return await _showsRepository.DeleteAsync(id);
+            return  _showsRepository.GetExportAsync();
         }
+
         private async Task<IEnumerable<ShowOutputModel>> GetOnPeriodAsync(ShowSearchModel searchModel)
         {
-            var today = DateTime.Today;
-            var start = today;
+            var start = default(DateTime);
             var end = default(DateTime);
 
             if (searchModel.Week != 0)
@@ -86,6 +99,7 @@ namespace Seats4Me.API.Services
             }
 
             var showResults = await _showsRepository.GetAsync(start, end, searchModel.Promotion);
+
             return Mapper.Map<List<ShowOutputModel>>(showResults);
         }
     }

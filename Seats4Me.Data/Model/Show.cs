@@ -2,14 +2,20 @@
 
 namespace Seats4Me.Data.Model
 {
-    public class Show : DataWithId
+    public class Show
     {
-        public string Name { get; set; }
-        public string Title { get; set; }
+        public int Id { get; set; }
+
         public string Description { get; set; }
-        public decimal RegularPrice { get; set; }
+
+        public string Name { get; set; }
+
         public decimal RegularDiscountPrice { get; set; }
 
-        public ICollection<TimeSlot> TimeSlots { get; set;  }
+        public decimal RegularPrice { get; set; }
+
+        public ICollection<TimeSlot> TimeSlots { get; set; }
+
+        public string Title { get; set; }
     }
 }

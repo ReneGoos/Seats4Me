@@ -1,13 +1,15 @@
-﻿using System;
-
-namespace Seats4Me.API.Models.Input
+﻿namespace Seats4Me.API.Models.Input
 {
     public class TicketInputModel
     {
-        public int Row { get; set; }
         public int Chair { get; set; }
-        public bool Reserve { get; set; }
-        public bool Pay { get; set; }
-        public decimal Price { get; set; }
+
+        public bool Discount { get; set; }
+
+        public bool Paid { get; set; }
+
+        public bool Reserved { get; set; }
+
+        public int Row { get; set; }
     }
 }

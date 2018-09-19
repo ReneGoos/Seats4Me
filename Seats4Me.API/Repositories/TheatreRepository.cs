@@ -1,5 +1,9 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Data;
+using System.Threading.Tasks;
+
 using Microsoft.EntityFrameworkCore;
+
 using Seats4Me.Data.Model;
 
 namespace Seats4Me.API.Repositories
@@ -12,9 +16,8 @@ namespace Seats4Me.API.Repositories
         {
             _context = context;
         }
-        public string LastErrorMessage { get; protected set; }
 
-        protected async Task<bool> SaveChangesAsync()
+        protected async Task SaveChangesAsync()
         {
             try
             {
@@ -22,14 +25,24 @@ namespace Seats4Me.API.Repositories
             }
             catch (DbUpdateException e)
             {
-                if (e.InnerException != null)
-                    LastErrorMessage = e.InnerException.Message;
-                else
-                    LastErrorMessage = e.Message;
-                return false;
+                ThrowDataException(e);
+            }
+            catch (ArgumentException e)
+            {
+                ThrowDataException(e);
+            }
+        }
+
+        private static void ThrowDataException(Exception e)
+        {
+            var errMsg = e.Message;
+
+            if (e.InnerException != null)
+            {
+                errMsg = e.InnerException.Message;
             }
 
-            return true;
+            throw new DataException(errMsg);
         }
     }
 }

@@ -1,8 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+
+using AutoMapper;
+
 using Microsoft.EntityFrameworkCore;
+
 using Seats4Me.API.Models.Result;
 using Seats4Me.Data.Model;
 
@@ -10,78 +13,103 @@ namespace Seats4Me.API.Repositories
 {
     public class TimeSlotSeatsRepository : TheatreRepository, ITimeSlotSeatsRepository
     {
-        public TimeSlotSeatsRepository(TheatreContext context) : base(context)
+        public TimeSlotSeatsRepository(TheatreContext context)
+            : base(context)
         {
         }
 
-        public Task<TimeSlotSeat> AddAsync(TimeSlotSeat value)
+        public async Task<TimeSlotSeat> AddAsync(TimeSlotSeat timeSlotSeat)
         {
-            throw new NotImplementedException();
-        }
+            var timeSlotSeatEntity = await _context.TimeSlotSeats.AddAsync(timeSlotSeat);
 
-        public Task<bool> DeleteAsync(int ticketId)
-        {
-            throw new NotImplementedException();
-        }
-
-        public async Task<IEnumerable<TimeSlotSeat>> GetAsync(int? showId = null, int? timeSlotId = null,
-            int? userId = null)
-        {
-            var timeSlotSeats = await _context.TimeSlotSeats.Where(tss =>
-                showId == null || tss.TimeSlot.ShowId == showId || timeSlotId == null || tss.TimeSlotId == timeSlotId ||
-                userId == null || tss.Seats4MeUserId == userId).ToListAsync();
-
-            return timeSlotSeats;
-        }
-
-        public Task<TimeSlotSeat> GetAsync(int ticketId)
-        {
-            var timeSlotSeat = _context.TimeSlotSeats.FirstOrDefaultAsync(tss => tss.Id == ticketId);
-
-            return timeSlotSeat;
-        }
-
-        public async Task<TimeSlotSeat> UpdateAsync(TimeSlotSeat value)
-        {
-            LastErrorMessage = "";
-            _context.TimeSlotSeats.Attach(value);
-            var timeSlotSeatEntity = _context.TimeSlotSeats.Update(value);
-            if (!await SaveChangesAsync())
-                return null;
+            await SaveChangesAsync();
 
             return timeSlotSeatEntity.Entity;
         }
 
-        public async Task<IEnumerable<TicketResult>> GetTicketsByTimeSlotAsync(int timeSlotId)
+        public async Task DeleteAsync(TimeSlotSeat timeSlotSeat)
         {
-            var timeSlot = await _context.TimeSlots.Include(t => t.Show)
-                .FirstOrDefaultAsync(s => s.Id == timeSlotId);
-            return await _context.Seats
-                .GroupJoin(_context.TimeSlotSeats.Where(a => a.TimeSlotId == timeSlotId),
-                    s => s.Id,
-                    t => t.SeatId,
-                    (s, t) => new
-                    {
-                        s,
-                        t
-                    }
-                )
-                .SelectMany(
-                    st => st.t.DefaultIfEmpty(),
-                    (a, t) => new
-                    {
-                        a.s,
-                        t
-                    }
-                )
-                .Select(s => new TicketResult
-                    {
-                        TimeSlot = timeSlot,
-                        TimeSlotSeat = s.t,
-                        Seat = s.s
-                    }
-                )
-                .ToListAsync();
+            _context.TimeSlotSeats.Remove(timeSlotSeat);
+
+            await SaveChangesAsync();
+        }
+
+        public Task<TimeSlotSeat> GetAsync(int ticketId)
+        {
+            var ticket = _context.TimeSlotSeats.FirstOrDefaultAsync(tss => tss.Id == ticketId);
+
+            return ticket;
+        }
+
+        public Task<TimeSlotSeat> GetAsync(int timeSlotId, int row, int chair)
+        {
+            var ticket = _context.TimeSlotSeats.FirstOrDefaultAsync(tss => tss.TimeSlotId == timeSlotId && tss.Seat.Row == row && tss.Seat.Chair == chair);
+
+            return ticket;
+        }
+
+        public async Task<TicketResult> GetTicketAsync(int ticketId)
+        {
+            var timeSlotSeat = await _context.TimeSlotSeats.Include(tss => tss.TimeSlot)
+                                             .ThenInclude(ts => ts.Show)
+                                             .Include(tss => tss.Seat)
+                                             .Where(tss => tss.Id == ticketId)
+                                             .FirstOrDefaultAsync();
+
+            return Mapper.Map<TicketResult>(timeSlotSeat);
+        }
+
+        public Task<List<TicketResult>> GetTicketsByTimeSlotAsync(int showId, int timeSlotId)
+        {
+            var timeSlot = _context.TimeSlots.Include(t => t.Show).FirstOrDefaultAsync(s => s.Id == timeSlotId && s.ShowId == showId);
+            var timeSlotSeats = _context.Seats.GroupJoin(_context.TimeSlotSeats.Where(tss => tss.TimeSlot.ShowId == showId && tss.TimeSlotId == timeSlotId),
+                                                         s => s.Id,
+                                                         t => t.SeatId,
+                                                         (s, t) => new
+                                                                   {
+                                                                       s,
+                                                                       t
+                                                                   })
+                                        .SelectMany(st => st.t.DefaultIfEmpty(),
+                                                    (a, t) => new
+                                                              {
+                                                                  a.s,
+                                                                  t
+                                                              })
+                                        .Select(s => new TicketResult
+                                                     {
+                                                         TimeSlot = timeSlot.Result,
+                                                         TimeSlotSeat = s.t,
+                                                         Seat = s.s
+                                                     })
+                                        .ToListAsync();
+
+            return timeSlotSeats;
+        }
+
+        public async Task<List<TicketResult>> GetTicketsByUserAsync(int userId)
+        {
+            if (!_context.TimeSlotSeats.Any(tss => tss.Seats4MeUserId == userId))
+            {
+                return new List<TicketResult>();
+            }
+
+            var timeSlotSeats = await _context.TimeSlotSeats
+                                        .Include(tss => tss.TimeSlot).ThenInclude(ts => ts.Show)
+                                        .Include(tss => tss.Seat)
+                                        .Where(tss => tss.Seats4MeUserId == userId)
+                                        .ToListAsync();
+
+            return Mapper.Map<List<TicketResult>>(timeSlotSeats);
+        }
+
+        public async Task<TimeSlotSeat> UpdateAsync(TimeSlotSeat timeSlotSeat)
+        {
+            var timeSlotSeatEntity = _context.TimeSlotSeats.Update(timeSlotSeat);
+
+            await SaveChangesAsync();
+
+            return timeSlotSeatEntity.Entity;
         }
 
         /*
@@ -162,9 +190,9 @@ namespace Seats4Me.API.Repositories
             return await SaveChangesAsync();
         }
 
-        public async Task<bool> DeleteAsync(int timeSlotSeatId)
+        public async Task DeleteAsync(int timeSlotSeatId)
         {
-            var timeSlotSeat = await _context.TimeSlotSeats.FindAsync(timeSlotSeatId);
+            var timeSlotSeat = await _context.TimeSlotSeats.GetTicketAsync(timeSlotSeatId);
             if (timeSlotSeat == null)
             {
                 LastErrorMessage = $"No record found to delete for '{timeSlotSeatId}'";

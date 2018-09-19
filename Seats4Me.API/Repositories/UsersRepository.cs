@@ -4,8 +4,10 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+
 using Seats4Me.API.Common;
 using Seats4Me.Data.Model;
 
@@ -13,20 +15,14 @@ namespace Seats4Me.API.Repositories
 {
     public class UsersRepository : TheatreRepository, IUsersRepository
     {
-        public UsersRepository(TheatreContext context) : base(context)
+        public UsersRepository(TheatreContext context)
+            : base(context)
         {
-        }
-
-        public Task<Seats4MeUser> GetUserAsync(string email)
-        {
-            return _context.Seats4MeUsers.FirstOrDefaultAsync(u =>
-                u.Email.Equals(email, StringComparison.InvariantCultureIgnoreCase));
         }
 
         public async Task<Seats4MeUser> GetAuthenticatedUserAsync(string email, string password)
         {
-            return await _context.Seats4MeUsers.FirstOrDefaultAsync(u =>
-                u.Email.Equals(email, StringComparison.InvariantCultureIgnoreCase) && u.Password.Equals(password));
+            return await _context.Seats4MeUsers.FirstOrDefaultAsync(u => u.Email.Equals(email, StringComparison.InvariantCultureIgnoreCase) && u.Password.Equals(password));
         }
 
         public string GetToken(Seats4MeUser user, string jwtKey, string jwtIssuer)
@@ -35,21 +31,24 @@ namespace Seats4Me.API.Repositories
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var claims = new List<Claim>
+                         {
+                             new Claim(JwtRegisteredClaimNames.Sub, user.Name),
+                             new Claim(JwtRegisteredClaimNames.Email, user.Email)
+                         };
+
+            foreach (var role in user.Roles.Split(','))
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Name),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email)
-            };
+                claims.Add(new Claim(role.InitCap(), "True"));
+            }
 
-            foreach (var role in user.Roles.Split(',')) claims.Add(new Claim(role.InitCap(), "True"));
-
-            var token = new JwtSecurityToken(jwtIssuer,
-                jwtIssuer,
-                expires: DateTime.Now.AddMinutes(30),
-                signingCredentials: creds,
-                claims: claims
-            );
+            var token = new JwtSecurityToken(jwtIssuer, jwtIssuer, expires: DateTime.Now.AddMinutes(30), signingCredentials: creds, claims: claims);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        public Task<Seats4MeUser> GetUserAsync(string email)
+        {
+            return _context.Seats4MeUsers.FirstOrDefaultAsync(u => u.Email.Equals(email, StringComparison.InvariantCultureIgnoreCase));
         }
     }
 }

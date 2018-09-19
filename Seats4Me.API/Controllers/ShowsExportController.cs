@@ -1,9 +1,10 @@
 ﻿using System.Net;
 using System.Threading.Tasks;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Seats4Me.API.Repositories;
-using Seats4Me.Data.Model;
+
+using Seats4Me.API.Services;
 
 namespace Seats4Me.API.Controllers
 {
@@ -11,22 +12,25 @@ namespace Seats4Me.API.Controllers
     [Authorize(Policy = "Owner")]
     public class ShowsExportController : Controller
     {
-        private readonly IShowsRepository _repository;
+        private readonly IShowsService _showsService;
 
-        public ShowsExportController(IShowsRepository repository)
+        public ShowsExportController(IShowsService showsService)
         {
-            _repository = repository;
+            _showsService = showsService;
         }
 
         //GET api/admin/show/export
-        [HttpGet("export")]
+        [HttpGet]
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.NotFound)]
-        public async Task<IActionResult> Export()
+        public async Task<IActionResult> GetAsync()
         {
-            var showsExport = await _repository.GetExport();
+            var showsExport = await _showsService.GetExportAsync();
+
             if (showsExport == null)
+            {
                 return NotFound();
+            }
 
             return Ok(showsExport);
         }
