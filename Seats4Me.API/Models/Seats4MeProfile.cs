@@ -33,7 +33,7 @@ namespace Seats4Me.API.Models
                 .ForMember(dest => dest.Day, opt => opt.MapFrom(src => src.TimeSlot.Day))
                 .ForMember(dest => dest.Row, opt => opt.MapFrom(src => src.Seat.Row))
                 .ForMember(dest => dest.Chair, opt => opt.MapFrom(src => src.Seat.Chair))
-                .ForMember(dest => dest.TimeSlotSeatId, opt => opt.MapFrom(src => src.TimeSlotSeat.Id))
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.TimeSlotSeat.Id))
                 .ForMember(dest => dest.Reserved, opt => opt.MapFrom(src => src.TimeSlotSeat.Reserved))
                 .ForMember(dest => dest.Paid, opt => opt.MapFrom(src => src.TimeSlotSeat.Paid))
                 .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.TimeSlotSeat.Price));

@@ -5,11 +5,11 @@ namespace Seats4Me.Data.Model
 {
     public class TimeSlot
     {
-        public int Id { get; set; }
-
         public DateTime Day { get; set; }
 
         public double Hours { get; set; }
+
+        public int Id { get; set; }
 
         public decimal PromoPrice { get; set; }
 

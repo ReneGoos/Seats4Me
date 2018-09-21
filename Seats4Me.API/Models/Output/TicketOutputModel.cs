@@ -10,6 +10,8 @@ namespace Seats4Me.API.Models.Output
 
         public string Description { get; set; }
 
+        public int Id { get; set; }
+
         public string Name { get; set; }
 
         public bool Paid { get; set; }
@@ -25,8 +27,6 @@ namespace Seats4Me.API.Models.Output
         public bool Reserved { get; set; }
 
         public int Row { get; set; }
-
-        public int TimeSlotSeatId { get; set; }
 
         public string Title { get; set; }
     }

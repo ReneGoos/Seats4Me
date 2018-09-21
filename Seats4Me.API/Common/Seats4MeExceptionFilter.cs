@@ -12,7 +12,7 @@ namespace Seats4Me.API.Common
         public void OnException(ExceptionContext context)
         {
             var status = HttpStatusCode.InternalServerError;
-            var message = String.Empty;
+            var message = string.Empty;
 
             var exceptionType = context.Exception.GetType();
 

@@ -75,10 +75,10 @@ namespace Seats4Me.API.Tests.Controllers
         {
             //Arrange
             var showOutputModel = new ShowOutputModel
-                                 {
-                                     Name = "Hamlet",
-                                     Id = 1
-                                 };
+                                  {
+                                      Name = "Hamlet",
+                                      Id = 1
+                                  };
 
             var showSearch = new ShowSearchModel();
             var showsService = new Mock<IShowsService>();
@@ -93,27 +93,6 @@ namespace Seats4Me.API.Tests.Controllers
             var actionResult = Assert.IsAssignableFrom<OkObjectResult>(result);
             var listShows = Assert.IsAssignableFrom<ShowOutputModel>(actionResult.Value);
             showsService.Verify(s => s.GetAsync(It.IsAny<int>()), Times.Once);
-        }
-
-        [Fact]
-        public async Task PostAsyncSucceeds()
-        {
-            //Arrange
-            var showInputModel = new ShowInputModel();
-            var showOutputModel = new ShowOutputModel();
-
-            var showsService = new Mock<IShowsService>();
-            showsService.Setup(s => s.AddAsync(It.IsAny<ShowInputModel>())).ReturnsAsync(showOutputModel);
-
-            var shows = new ShowsController(showsService.Object);
-
-            //Act
-            var result = await shows.PostAsync(showInputModel);
-
-            //Assert
-            var actionResult = Assert.IsAssignableFrom<CreatedAtRouteResult>(result);
-            var show = Assert.IsAssignableFrom<ShowOutputModel>(actionResult.Value);
-            showsService.Verify(s => s.AddAsync(It.IsAny<ShowInputModel>()), Times.Once);
         }
 
         [Fact]
@@ -156,24 +135,24 @@ namespace Seats4Me.API.Tests.Controllers
         }
 
         [Fact]
-        public async Task PutAsyncSucceeds()
+        public async Task PostAsyncSucceeds()
         {
             //Arrange
             var showInputModel = new ShowInputModel();
             var showOutputModel = new ShowOutputModel();
 
             var showsService = new Mock<IShowsService>();
-            showsService.Setup(s => s.UpdateAsync(It.IsAny<int>(), It.IsAny<ShowInputModel>())).ReturnsAsync(showOutputModel);
+            showsService.Setup(s => s.AddAsync(It.IsAny<ShowInputModel>())).ReturnsAsync(showOutputModel);
 
             var shows = new ShowsController(showsService.Object);
 
             //Act
-            var result = await shows.PutAsync(1, showInputModel);
+            var result = await shows.PostAsync(showInputModel);
 
             //Assert
-            var actionResult = Assert.IsAssignableFrom<OkObjectResult>(result);
+            var actionResult = Assert.IsAssignableFrom<CreatedAtRouteResult>(result);
             var show = Assert.IsAssignableFrom<ShowOutputModel>(actionResult.Value);
-            showsService.Verify(s => s.UpdateAsync(It.IsAny<int>(), It.IsAny<ShowInputModel>()), Times.Once);
+            showsService.Verify(s => s.AddAsync(It.IsAny<ShowInputModel>()), Times.Once);
         }
 
         [Fact]
@@ -213,6 +192,27 @@ namespace Seats4Me.API.Tests.Controllers
             var actionResult = Assert.IsAssignableFrom<BadRequestObjectResult>(result);
             Assert.IsType<string>(actionResult.Value);
             showsService.Verify(s => s.UpdateAsync(It.IsAny<int>(), It.IsAny<ShowInputModel>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task PutAsyncSucceeds()
+        {
+            //Arrange
+            var showInputModel = new ShowInputModel();
+            var showOutputModel = new ShowOutputModel();
+
+            var showsService = new Mock<IShowsService>();
+            showsService.Setup(s => s.UpdateAsync(It.IsAny<int>(), It.IsAny<ShowInputModel>())).ReturnsAsync(showOutputModel);
+
+            var shows = new ShowsController(showsService.Object);
+
+            //Act
+            var result = await shows.PutAsync(1, showInputModel);
+
+            //Assert
+            var actionResult = Assert.IsAssignableFrom<OkObjectResult>(result);
+            var show = Assert.IsAssignableFrom<ShowOutputModel>(actionResult.Value);
+            showsService.Verify(s => s.UpdateAsync(It.IsAny<int>(), It.IsAny<ShowInputModel>()), Times.Once);
         }
     }
 }

@@ -50,7 +50,7 @@ namespace Seats4Me.API.Controllers
         }
 
         [Authorize(Policy = "Contributor")]
-        [HttpGet("/api/Shows/{showId}/Timeslots/{timeSlotId}/Tickets/{id}")]
+        [HttpGet("/api/Shows/{showId}/Timeslots/{timeSlotId}/Tickets/{id}", Name = "TicketsGetAsync")]
         [ProducesResponseType(typeof(TicketOutputModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.NotFound)]
         public async Task<IActionResult> GetAsync(int showId, int timeSlotId, int id)
@@ -79,7 +79,7 @@ namespace Seats4Me.API.Controllers
 
         [Authorize(Policy = "Customer")]
         [HttpPost("/api/Shows/{showId}/Timeslots/{timeSlotId}/Tickets")]
-        [ProducesResponseType(typeof(TicketOutputModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(TicketOutputModel), (int)HttpStatusCode.Created)]
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> PostAsync(int showId, int timeSlotId, [FromBody] TicketInputModel value)
         {
@@ -102,7 +102,14 @@ namespace Seats4Me.API.Controllers
                 return BadRequest("Ticket not inserted");
             }
 
-            return Ok(ticket);
+            return CreatedAtRoute("TicketsGetAsync",
+                                  new
+                                  {
+                                      showId,
+                                      timeSlotId,
+                                      id = ticket.Id
+                                  },
+                                  ticket);
         }
 
         [Authorize(Policy = "Customer")]

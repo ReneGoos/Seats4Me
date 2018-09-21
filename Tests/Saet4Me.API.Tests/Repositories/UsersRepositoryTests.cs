@@ -11,6 +11,31 @@ namespace Seats4Me.API.Tests.Repositories
     public class UsersRepositoryTests
     {
         [Fact]
+        public async Task GetTokenSucceeds()
+        {
+            //Arrange
+            var signingIssuer = "http://www.seats4me.com";
+            var signingKey = "MMMHHHAHD77979p3ejeljwiur97";
+            var context = TheatreContextInit.InitializeContextInMemoryDb(MethodBase.GetCurrentMethod().DeclaringType.GUID.ToString());
+            var userEntity = await context.Seats4MeUsers.AddAsync(new Seats4MeUser
+                                                                  {
+                                                                      Name = "Test",
+                                                                      Email = "test@TEST",
+                                                                      Password = "password",
+                                                                      Roles = "admin"
+                                                                  });
+
+            await context.SaveChangesAsync();
+            var repository = new UsersRepository(context);
+
+            //Act
+            var token = repository.GetToken(userEntity.Entity, signingKey, signingIssuer);
+
+            //Assert
+            Assert.NotNull(token);
+        }
+
+        [Fact]
         public async Task GetUser()
         {
             //Arrange
@@ -76,31 +101,6 @@ namespace Seats4Me.API.Tests.Repositories
             //Assert
             Assert.NotNull(seats4MeUser);
             Assert.Equal("admin", seats4MeUser.Roles);
-        }
-
-
-        [Fact]
-        public async Task GetTokenSucceeds()
-        {
-            //Arrange
-            var signingIssuer = "http://www.seats4me.com";
-            var signingKey = "MMMHHHAHD77979p3ejeljwiur97";
-            var context = TheatreContextInit.InitializeContextInMemoryDb(MethodBase.GetCurrentMethod().DeclaringType.GUID.ToString());
-            var userEntity = await context.Seats4MeUsers.AddAsync(new Seats4MeUser
-                                                 {
-                                                     Email = "test@TEST",
-                                                     Password = "password",
-                                                     Roles = "admin"
-                                                 });
-
-            await context.SaveChangesAsync();
-            var repository = new UsersRepository(context);
-
-            //Act
-            var token = repository.GetToken(userEntity.Entity, signingKey, signingIssuer);
-
-            //Assert
-            Assert.NotNull(token);
         }
 
         [Fact]

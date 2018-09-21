@@ -50,11 +50,7 @@ namespace Seats4Me.API.Repositories
 
         public async Task<TicketResult> GetTicketAsync(int ticketId)
         {
-            var timeSlotSeat = await _context.TimeSlotSeats.Include(tss => tss.TimeSlot)
-                                             .ThenInclude(ts => ts.Show)
-                                             .Include(tss => tss.Seat)
-                                             .Where(tss => tss.Id == ticketId)
-                                             .FirstOrDefaultAsync();
+            var timeSlotSeat = await _context.TimeSlotSeats.Include(tss => tss.TimeSlot).ThenInclude(ts => ts.Show).Include(tss => tss.Seat).Where(tss => tss.Id == ticketId).FirstOrDefaultAsync();
 
             return Mapper.Map<TicketResult>(timeSlotSeat);
         }
@@ -94,11 +90,7 @@ namespace Seats4Me.API.Repositories
                 return new List<TicketResult>();
             }
 
-            var timeSlotSeats = await _context.TimeSlotSeats
-                                        .Include(tss => tss.TimeSlot).ThenInclude(ts => ts.Show)
-                                        .Include(tss => tss.Seat)
-                                        .Where(tss => tss.Seats4MeUserId == userId)
-                                        .ToListAsync();
+            var timeSlotSeats = await _context.TimeSlotSeats.Include(tss => tss.TimeSlot).ThenInclude(ts => ts.Show).Include(tss => tss.Seat).Where(tss => tss.Seats4MeUserId == userId).ToListAsync();
 
             return Mapper.Map<List<TicketResult>>(timeSlotSeats);
         }
@@ -177,10 +169,10 @@ namespace Seats4Me.API.Repositories
         {
             if (!value.Reserved && !value.Paid)
             {
-                return await DeleteAsync(value.TimeSlotSeatId);
+                return await DeleteAsync(value.Id);
             }
 
-            var timeSlotSeat = _context.TimeSlotSeats.First(ts => ts.Id == value.TimeSlotSeatId);
+            var timeSlotSeat = _context.TimeSlotSeats.First(ts => ts.Id == value.Id);
             timeSlotSeat.Paid = value.Paid;
             timeSlotSeat.Reserved = value.Reserved;
             timeSlotSeat.SeatId = value.SeatId;
@@ -239,7 +231,7 @@ namespace Seats4Me.API.Repositories
                         Chair = s.s.Chair,
                         TimeSlotId = timeSlot.Id,
                         Start = timeSlot.Day,
-                        TimeSlotSeatId = -1,
+                        Id = -1,
                         Reserved = false,
                         Paid = false,
                         Email = null
@@ -270,7 +262,7 @@ namespace Seats4Me.API.Repositories
                                         Chair = s.Seat.Chair,
                                         TimeSlotId = s.TimeSlot.Id,
                                         Start = s.TimeSlot.Day,
-                                        TimeSlotSeatId = s.Id,
+                                        Id = s.Id,
                                         Reserved = s.Reserved,
                                         Paid = s.Paid,
                                         Email = s.Seats4MeUser.Email

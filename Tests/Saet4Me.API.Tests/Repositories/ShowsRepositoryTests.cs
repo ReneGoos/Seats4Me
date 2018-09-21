@@ -43,7 +43,6 @@ namespace Seats4Me.API.Tests.Repositories
                                        }
                        };
 
-
             //Act
             var result = await showsRepository.AddAsync(show);
 
@@ -82,6 +81,7 @@ namespace Seats4Me.API.Tests.Repositories
                                            }
                                        }
                        };
+
             context.Shows.Add(show);
             await context.SaveChangesAsync();
 
@@ -126,6 +126,7 @@ namespace Seats4Me.API.Tests.Repositories
                                            }
                                        }
                        };
+
             context.Shows.Add(show);
             await context.SaveChangesAsync();
 
@@ -150,6 +151,49 @@ namespace Seats4Me.API.Tests.Repositories
 
             //Assert
             Assert.Contains("Hamlet", export);
+        }
+
+        [Fact]
+        public async Task GetAsyncByIdSucceeds()
+        {
+            //Arrange
+            var context = TheatreContextInit.InitializeContextInMemoryDb(MethodBase.GetCurrentMethod().DeclaringType.GUID.ToString());
+            var firstDay = new DateTime(2018, 6, 2);
+            var lastDay = firstDay.AddDays(7);
+
+            var showEntity = context.Shows.Add(new Show
+                                               {
+                                                   Name = "Hamlet vs Hamlet",
+                                                   TimeSlots = new List<TimeSlot>
+                                                               {
+                                                                   new TimeSlot
+                                                                   {
+                                                                       Day = new DateTime(2018, 5, 31, 18, 0, 0),
+                                                                       Hours = 2
+                                                                   },
+
+                                                                   new TimeSlot
+                                                                   {
+                                                                       Day = new DateTime(2018, 6, 2, 18, 0, 0),
+                                                                       Hours = 2
+                                                                   },
+                                                                   new TimeSlot
+                                                                   {
+                                                                       Day = new DateTime(2018, 6, 9, 18, 0, 0),
+                                                                       Hours = 3
+                                                                   }
+                                                               }
+                                               });
+
+            await context.SaveChangesAsync();
+            var showsRepository = new ShowsRepository(context);
+
+            //Act
+            var show = await showsRepository.GetAsync(showEntity.Entity.Id);
+
+            //Assert
+            Assert.Equal(3, show.TimeSlots.Count);
+            Assert.Equal("Hamlet vs Hamlet", show.Name);
         }
 
         [Fact]
@@ -216,49 +260,6 @@ namespace Seats4Me.API.Tests.Repositories
         }
 
         [Fact]
-        public async Task GetAsyncByIdSucceeds()
-        {
-            //Arrange
-            var context = TheatreContextInit.InitializeContextInMemoryDb(MethodBase.GetCurrentMethod().DeclaringType.GUID.ToString());
-            var firstDay = new DateTime(2018, 6, 2);
-            var lastDay = firstDay.AddDays(7);
-
-            var showEntity = context.Shows.Add(new Show
-                                       {
-                                           Name = "Hamlet vs Hamlet",
-                                           TimeSlots = new List<TimeSlot>
-                                                       {
-                                                           new TimeSlot
-                                                           {
-                                                               Day = new DateTime(2018, 5, 31, 18, 0, 0),
-                                                               Hours = 2
-                                                           },
-
-                                                           new TimeSlot
-                                                           {
-                                                               Day = new DateTime(2018, 6, 2, 18, 0, 0),
-                                                               Hours = 2
-                                                           },
-                                                           new TimeSlot
-                                                           {
-                                                               Day = new DateTime(2018, 6, 9, 18, 0, 0),
-                                                               Hours = 3
-                                                           }
-                                                       }
-                                       });
-
-            await context.SaveChangesAsync();
-            var showsRepository = new ShowsRepository(context);
-
-            //Act
-            var show = await showsRepository.GetAsync(showEntity.Entity.Id);
-
-            //Assert
-            Assert.Equal(3, show.TimeSlots.Count);
-            Assert.Equal("Hamlet vs Hamlet", show.Name);
-        }
-
-        [Fact]
         public async Task UpdateAsyncSucceeds()
         {
             var context = TheatreContextInit.InitializeContextInMemoryDb(MethodBase.GetCurrentMethod().DeclaringType.GUID.ToString());
@@ -287,6 +288,7 @@ namespace Seats4Me.API.Tests.Repositories
                                            }
                                        }
                        };
+
             context.Shows.Add(show);
             await context.SaveChangesAsync();
 

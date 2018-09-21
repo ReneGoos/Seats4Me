@@ -15,10 +15,32 @@ namespace Seats4Me.API.Tests.Controllers
     public class LoginControllerTests
     {
         [Fact]
+        public async Task InvalidUserLogin()
+        {
+            //Arrange
+            var loginModel = new LoginInputModel
+                             {
+                                 Email = "test@tests.nl",
+                                 Password = "*****"
+                             };
+
+            var service = new Mock<IUsersService>();
+            service.Setup(s => s.GetTokenAsync(It.IsAny<LoginInputModel>())).ReturnsAsync(default(string));
+            var loginController = new LoginController(service.Object);
+
+            //Act
+            var result = await loginController.PostAsync(loginModel);
+
+            //Assert
+            Assert.IsType<BadRequestResult>(result);
+            service.Verify(s => s.GetTokenAsync(It.IsAny<LoginInputModel>()), Times.Once);
+        }
+
+        [Fact]
         public async Task ValidUserLogin()
         {
             //Arrange
-            var loginModel = new LoginInputModel()
+            var loginModel = new LoginInputModel
                              {
                                  Email = "test@tests.nl",
                                  Password = "*****"
@@ -34,28 +56,6 @@ namespace Seats4Me.API.Tests.Controllers
             //Assert
             var payload = Assert.IsType<OkObjectResult>(result);
             Assert.Equal("validtoken", payload.Value);
-            service.Verify(s => s.GetTokenAsync(It.IsAny<LoginInputModel>()), Times.Once);
-        }
-
-        [Fact]
-        public async Task InvalidUserLogin()
-        {
-            //Arrange
-            var loginModel = new LoginInputModel()
-                             {
-                                 Email = "test@tests.nl",
-                                 Password = "*****"
-                             };
-
-            var service = new Mock<IUsersService>();
-            service.Setup(s => s.GetTokenAsync(It.IsAny<LoginInputModel>())).ReturnsAsync(default(string));
-            var loginController = new LoginController(service.Object);
-
-            //Act
-            var result = await loginController.PostAsync(loginModel);
-
-            //Assert
-            Assert.IsType<BadRequestResult>(result);
             service.Verify(s => s.GetTokenAsync(It.IsAny<LoginInputModel>()), Times.Once);
         }
     }

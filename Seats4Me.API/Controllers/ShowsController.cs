@@ -45,7 +45,7 @@ namespace Seats4Me.API.Controllers
         }
 
         // GET api/shows/5
-        [HttpGet("{id}", Name = "GetAsync")]
+        [HttpGet("{id}", Name = "ShowsGetAsync")]
         [ProducesResponseType(typeof(ShowOutputModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.NotFound)]
         public async Task<IActionResult> GetAsync(int id)
@@ -79,7 +79,7 @@ namespace Seats4Me.API.Controllers
                 return BadRequest("Show not inserted");
             }
 
-            return CreatedAtRoute("GetAsync",
+            return CreatedAtRoute("ShowsGetAsync",
                                   new
                                   {
                                       id = result.Id

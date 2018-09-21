@@ -54,17 +54,17 @@ namespace Seats4Me.API.Controllers
         }
 
         // GET: api/timeSlots/5
-        [HttpGet("{timeSlotId}")]
+        [HttpGet("{id}", Name = "TimeSlotsGetAsync")]
         [ProducesResponseType(typeof(TimeSlotOutputModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.NotFound)]
-        public async Task<IActionResult> GetAsync(int showId, int timeSlotId)
+        public async Task<IActionResult> GetAsync(int showId, int id)
         {
             if (!await _showsService.ExistsAsync(showId))
             {
                 return NotFound();
             }
 
-            var timeSlot = await _timeSlotsService.GetAsync(showId, timeSlotId);
+            var timeSlot = await _timeSlotsService.GetAsync(showId, id);
 
             if (timeSlot == null)
             {
@@ -77,7 +77,7 @@ namespace Seats4Me.API.Controllers
         // POST api/admin/timeSlot
         [Authorize(Policy = "Contributor")]
         [HttpPost]
-        [ProducesResponseType(typeof(TimeSlotOutputModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(TimeSlotOutputModel), (int)HttpStatusCode.Created)]
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> PostAsync(int showId, [FromBody] TimeSlotInputModel value)
         {
@@ -86,14 +86,20 @@ namespace Seats4Me.API.Controllers
                 return BadRequest($"Invalid show {showId}");
             }
 
-            var result = await _timeSlotsService.AddAsync(showId, value);
+            var timeSlot = await _timeSlotsService.AddAsync(showId, value);
 
-            if (result == null)
+            if (timeSlot == null)
             {
                 return BadRequest("Timeslot not inserted");
             }
 
-            return Ok(result);
+            return CreatedAtRoute("TimeSlotsGetAsync",
+                                  new
+                                  {
+                                      showId,
+                                      id = timeSlot.Id
+                                  },
+                                  timeSlot);
         }
 
         // PUT api/admin/timeSlot/5
@@ -108,14 +114,14 @@ namespace Seats4Me.API.Controllers
                 return BadRequest($"Invalid show {showId}");
             }
 
-            var result = await _timeSlotsService.UpdateAsync(showId, id, value);
+            var timeSlot = await _timeSlotsService.UpdateAsync(showId, id, value);
 
-            if (result == null)
+            if (timeSlot == null)
             {
-                return BadRequest();
+                return BadRequest("Time slot not updated");
             }
 
-            return Ok();
+            return Ok(timeSlot);
         }
     }
 }

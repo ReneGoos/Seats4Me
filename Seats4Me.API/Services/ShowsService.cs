@@ -62,6 +62,11 @@ namespace Seats4Me.API.Services
             return Mapper.Map<ShowOutputModel>(show);
         }
 
+        public Task<string> GetExportAsync()
+        {
+            return _showsRepository.GetExportAsync();
+        }
+
         public async Task<ShowOutputModel> UpdateAsync(int id, ShowInputModel showInput)
         {
             var show = Mapper.Map<Show>(showInput);
@@ -70,11 +75,6 @@ namespace Seats4Me.API.Services
             show = await _showsRepository.UpdateAsync(show);
 
             return Mapper.Map<ShowOutputModel>(show);
-        }
-
-        public Task<string> GetExportAsync()
-        {
-            return  _showsRepository.GetExportAsync();
         }
 
         private async Task<IEnumerable<ShowOutputModel>> GetOnPeriodAsync(ShowSearchModel searchModel)

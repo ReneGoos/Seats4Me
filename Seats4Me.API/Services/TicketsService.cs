@@ -42,6 +42,13 @@ namespace Seats4Me.API.Services
                 throw new ArgumentException($"Seat {ticketInput.Chair} on row {ticketInput.Row} is not valid");
             }
 
+            var otherTicket = await _timeSlotSeatsRepository.GetAsync(timeSlotId, ticketInput.Row, ticketInput.Chair);
+
+            if (otherTicket != null)
+            {
+                throw new ArgumentException($"No tickets available for seat {ticketInput.Chair} on row {ticketInput.Row} in slot {timeSlotId}");
+            }
+
             var price = await _timeSlotsService.GetPriceAsync(showId, timeSlotId, ticketInput.Discount);
 
             var ticket = Mapper.Map<TimeSlotSeat>(ticketInput);
@@ -54,7 +61,7 @@ namespace Seats4Me.API.Services
 
             return ticket == null
                        ? null
-                       : Mapper.Map<TicketOutputModel>(await GetTicketAsync(ticket.Id));
+                       : Mapper.Map<TicketOutputModel>(await _timeSlotSeatsRepository.GetTicketAsync(ticket.Id));
         }
 
         public async Task DeleteAsync(int id, string email)
@@ -139,6 +146,13 @@ namespace Seats4Me.API.Services
                 throw new ArgumentException($"Seat {ticketInput.Chair} on row {ticketInput.Row} is not valid");
             }
 
+            var otherTicket = await _timeSlotSeatsRepository.GetAsync(ticket.TimeSlotId, ticketInput.Row, ticketInput.Chair);
+
+            if (otherTicket != null)
+            {
+                throw new ArgumentException($"No tickets available for seat {ticketInput.Chair} on row {ticketInput.Row} in slot {ticket.TimeSlotId}");
+            }
+
             var price = ticket.Price == 0
                             ? await _timeSlotsService.GetPriceAsync(ticket.TimeSlot.ShowId, ticket.TimeSlotId, ticketInput.Discount)
                             : ticket.Price;
@@ -152,65 +166,17 @@ namespace Seats4Me.API.Services
 
             return ticket == null
                        ? null
-                       : Mapper.Map<TicketOutputModel>(await GetTicketAsync(ticket.Id));
+                       : Mapper.Map<TicketOutputModel>(await _timeSlotSeatsRepository.GetTicketAsync(ticket.Id));
         }
 
-        private Task<Seats4MeUser> ValidateUserAsync(string email)
+        private async Task<Seats4MeUser> ValidateUserAsync(string email)
         {
             if (email == null)
             {
                 return null;
             }
 
-            return _usersRepository.GetUserAsync(email);
+            return await _usersRepository.GetUserAsync(email);
         }
-
-        /*
-        public async Task<IEnumerable<TicketOutputModel>> GetFreeSeats(int timeSlotId)
-        {
-            var timeSlot = await _context.TimeSlots.Include(t => t.Show)
-                .FirstOrDefaultAsync(s => s.Id == timeSlotId);
-            return await _context.Seats
-                .GroupJoin(_context.TimeSlotSeats.Where(a => a.TimeSlotId == timeSlotId),
-                    s => s.Id,
-                    t => t.SeatId,
-                    (s, t) => new
-                    {
-                        s,
-                        t
-                    }
-                )
-                .SelectMany(
-                    st => st.t.DefaultIfEmpty(),
-                    (a, t) => new
-                    {
-                        a.s,
-                        t
-                    }
-                )
-                .Where(s => s.t == null)
-                .Select(s => new TicketOutputModel()
-                {
-                    ShowId = timeSlot.Show.Id,
-                    Name = timeSlot.Show.Name,
-                    Title = timeSlot.Show.Title,
-                    Description = timeSlot.Show.Description,
-                    RegularPrice = timeSlot.Show.RegularPrice,
-                    RegularDiscountPrice = timeSlot.Show.RegularDiscountPrice,
-                    PromoPrice = timeSlot.PromoPrice,
-                    SeatId = s.s.Id,
-                    Row = s.s.Row,
-                    Chair = s.s.Chair,
-                    TimeSlotId = timeSlot.Id,
-                    Start = timeSlot.Day,
-                    TimeSlotSeatId = -1,
-                    Reserved = false,
-                    Paid = false,
-                    Email = null
-                }
-                )
-                .ToListAsync();
-        }
-        */
     }
 }

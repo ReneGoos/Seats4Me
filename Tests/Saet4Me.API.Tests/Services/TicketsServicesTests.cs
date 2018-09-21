@@ -1,260 +1,1065 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
-using Seats4Me.API.Tests.Repositories;
+using AutoMapper;
+
+using Moq;
+
+using Seats4Me.API.Models.Input;
+using Seats4Me.API.Models.Output;
+using Seats4Me.API.Models.Result;
+using Seats4Me.API.Repositories;
+using Seats4Me.API.Services;
 using Seats4Me.Data.Model;
+
+using Xunit;
 
 namespace Seats4Me.API.Tests.Services
 {
-    public class TicketsServicesTests
+    public class TicketsServicesTests : MapperTest
     {
-        private async Task<TheatreContext> SetupData(string name)
+        [Fact]
+        public async Task AddAsyncIncorrectEmail()
         {
-            var context = TheatreContextInit.InitializeContextInMemoryDb(name);
-            TheatreContextInit.AddTestData(context);
+            //Arrange
+            var ticketInputModel = new TicketInputModel();
+            var seat = new Seat();
+            var email = "rene@seats4me.com";
 
-            var today = DateTime.Today;
-            await context.Shows.AddAsync(new Show
-                                         {
-                                             Name = "De Woef side story",
-                                             RegularPrice = 15,
-                                             RegularDiscountPrice = 12,
-                                             TimeSlots = new List<TimeSlot>
+            var ticket = Mapper.Map<TimeSlotSeat>(ticketInputModel);
+            var ticketResult = new TicketResult
+                               {
+                                   TimeSlot = new TimeSlot
+                                              {
+                                                  Show = new Show
                                                          {
-                                                             new TimeSlot
-                                                             {
-                                                                 Day = new DateTime(today.Year, today.Month, today.Day, 14, 0, 0).AddDays(2),
-                                                                 Hours = 1.5,
-                                                                 PromoPrice = 10
-                                                             }
+                                                             Name = "Hamlet"
                                                          }
-                                         });
+                                              },
+                                   Seat = new Seat(),
+                                   TimeSlotSeat = new TimeSlotSeat()
+                               };
 
-            for (var row = 1; row <= 15; row++)
+            var timeSlotsService = new Mock<ITimeSlotsService>();
+            var timeSlotSeatsRepository = new Mock<ITimeSlotSeatsRepository>();
+            var usersRepository = new Mock<IUsersRepository>();
+            var seatsRepository = new Mock<ISeatsRepository>();
+
+            timeSlotsService.Setup(s => s.GetPriceAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>())).ReturnsAsync(10);
+            timeSlotSeatsRepository.Setup(s => s.AddAsync(It.IsAny<TimeSlotSeat>())).ReturnsAsync(ticket);
+            timeSlotSeatsRepository.Setup(s => s.GetAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(default(TimeSlotSeat));
+            timeSlotSeatsRepository.Setup(s => s.GetTicketAsync(It.IsAny<int>())).ReturnsAsync(ticketResult);
+            usersRepository.Setup(s => s.GetUserAsync(It.IsAny<string>())).ReturnsAsync(default(Seats4MeUser));
+
+            seatsRepository.Setup(s => s.GetAsync(It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(seat);
+
+            var tickets = new TicketsService(timeSlotsService.Object, timeSlotSeatsRepository.Object, usersRepository.Object, seatsRepository.Object);
+
+            var exception = default(Exception);
+
+            //Act
+            try
             {
-                for (var chair = 1; chair <= 6; chair++)
-                {
-                    await context.Seats.AddAsync(new Seat
-                                                 {
-                                                     Row = row,
-                                                     Chair = chair
-                                                 });
-                }
+                await tickets.AddAsync(1, 1, ticketInputModel, email);
+            }
+            catch (Exception e)
+            {
+                exception = e;
             }
 
-            await context.Seats4MeUsers.AddAsync(new Seats4MeUser
-                                                 {
-                                                     Name = "René",
-                                                     Email = "rene@seats4me.com",
-                                                     Roles = "visitor"
-                                                 });
-
-            await context.SaveChangesAsync();
-
-            return context;
-        }
-
-        /*
-        [Fact]
-        public async Task OrderTicketsSucceeds()
-        {
-            //Arrange
-            var timeSlotsService = new Mock<ITimeSlotsService>();
-            var ticketsRepository = new Mock<ITimeSlotSeatsRepository>();
-            var seatsRepository = new Mock<ISeatsRepository>();
-            var usersRepository = new Mock<IUsersRepository>();
-            var ticketsService = new TicketsService(timeSlotsService.Object, ticketsRepository.Object, usersRepository.Object, seatsRepository.Object);
-
-            var show = context.Shows.First(s => s.Name.Contains("Woef"));
-            var timeSlot = show.TimeSlots.First();
-            var seat = context.Seats.First(s => s.Row == 1 && s.Chair == 1);
-            var user = context.Seats4MeUsers.First();
-
-            ticketsService.ControllerContext.HttpContext = new DefaultHttpContext();
-            ticketsService.ControllerContext.HttpContext.User = new TestPrincipal(new Claim(ClaimTypes.Email, user.Email));
-
-            var ticket = new TicketOutputModel
-                         {
-                             TimeSlotId = timeSlot.Id,
-                             SeatId = seat.Id,
-                             Price = timeSlot.PromoPrice,
-                             Email = user.Email,
-                             Paid = true,
-                             Reserved = true
-                         };
-
-            //Act
-            var result = await ticketsService.UpdateAsync(ticketId, ticket,);
-
             //Assert
-            var okResult = Assert.IsAssignableFrom<OkObjectResult>(result);
-            var tickets = Assert.IsAssignableFrom<int>(okResult.Value);
-            Assert.True(tickets > 0);
-            Assert.Contains(context.TimeSlotSeats, s => s.Paid);
+            Assert.IsType<UnauthorizedAccessException>(exception);
+            Assert.NotNull(exception.Message);
+            timeSlotSeatsRepository.Verify(s => s.AddAsync(It.IsAny<TimeSlotSeat>()), Times.Never);
         }
 
         [Fact]
-        public async Task OrderTicketsWrongPriceFails()
+        public async Task AddAsyncNoEmail()
         {
             //Arrange
-            var timeSlotsService = new Mock<ITimeSlotsService>();
-            var ticketsRepository = new Mock<ITimeSlotSeatsRepository>();
-            var seatsRepository = new Mock<ISeatsRepository>();
-            var usersRepository = new Mock<IUsersRepository>();
-            var ticketsService = new TicketsService(timeSlotsService.Object, ticketsRepository.Object, usersRepository.Object, seatsRepository.Object);
+            var ticketInputModel = new TicketInputModel();
+            var seat = new Seat();
 
-            var show = context.Shows.First();
-            var timeSlot = show.TimeSlots.First();
-            var seat = context.Seats.First(s => s.Row == 1 && s.Chair == 1);
-            var user = context.Seats4MeUsers.First();
-
-            var ticket = new TicketOutputModel
-                         {
-                             TimeSlotId = timeSlot.Id,
-                             SeatId = seat.Id,
-                             Price = 1,
-                             Email = user.Email,
-                             Paid = true,
-                             Reserved = true
-                         };
-
-            ticketsService.ControllerContext.HttpContext = new DefaultHttpContext();
-            ticketsService.ControllerContext.HttpContext.User = new TestPrincipal(new Claim(ClaimTypes.Email, user.Email));
-
-            //Act
-            var result = await ticketsService.PostAsync(ticket);
-
-            //Assert
-            var badResult = Assert.IsAssignableFrom<BadRequestObjectResult>(result);
-            var badMessage = Assert.IsAssignableFrom<string>(badResult.Value);
-            Assert.Contains("price", badMessage);
-        }
-
-        [Fact]
-        public async Task PayReservedTicketsSucceeds()
-        {
-            //Arrange
-            var timeSlotsService = new Mock<ITimeSlotsService>();
-            var ticketsRepository = new Mock<ITimeSlotSeatsRepository>();
-            var seatsRepository = new Mock<ISeatsRepository>();
-            var usersRepository = new Mock<IUsersRepository>();
-            var ticketsService = new TicketsService(timeSlotsService.Object, ticketsRepository.Object, usersRepository.Object, seatsRepository.Object);
-
-            var show = context.Shows.First();
-            var timeSlot = show.TimeSlots.First();
-            var seat = context.Seats.First(s => s.Row == 1 && s.Chair == 1);
-            var user = context.Seats4MeUsers.First();
-
-            var timeSlotSeat = context.TimeSlotSeats.Add(new TimeSlotSeat
+            var ticket = Mapper.Map<TimeSlotSeat>(ticketInputModel);
+            var ticketResult = new TicketResult
+                               {
+                                   TimeSlot = new TimeSlot
+                                              {
+                                                  Show = new Show
                                                          {
-                                                             TimeSlotId = timeSlot.Id,
-                                                             SeatId = seat.Id,
-                                                             Price = show.RegularPrice,
-                                                             Seats4MeUserId = user.Id,
-                                                             Paid = false,
-                                                             Reserved = true
-                                                         });
+                                                             Name = "Hamlet"
+                                                         }
+                                              },
+                                   Seat = new Seat(),
+                                   TimeSlotSeat = new TimeSlotSeat()
+                               };
 
-            await context.SaveChangesAsync();
-            var timeSlotSeatId = timeSlotSeat.Entity.Id;
+            var timeSlotsService = new Mock<ITimeSlotsService>();
+            var timeSlotSeatsRepository = new Mock<ITimeSlotSeatsRepository>();
+            var usersRepository = new Mock<IUsersRepository>();
+            var seatsRepository = new Mock<ISeatsRepository>();
 
-            var ticket = new TicketOutputModel
-                         {
-                             TimeSlotSeatId = timeSlotSeatId,
-                             TimeSlotId = timeSlot.Id,
-                             SeatId = seat.Id,
-                             Price = show.RegularPrice,
-                             Email = user.Email,
-                             Paid = true,
-                             Reserved = true
-                         };
+            timeSlotsService.Setup(s => s.GetPriceAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>())).ReturnsAsync(10);
+            timeSlotSeatsRepository.Setup(s => s.AddAsync(It.IsAny<TimeSlotSeat>())).ReturnsAsync(ticket);
+            timeSlotSeatsRepository.Setup(s => s.GetAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(default(TimeSlotSeat));
+            timeSlotSeatsRepository.Setup(s => s.GetTicketAsync(It.IsAny<int>())).ReturnsAsync(ticketResult);
+            usersRepository.Setup(s => s.GetUserAsync(It.IsAny<string>())).ReturnsAsync(default(Seats4MeUser));
 
-            ticketsService.ControllerContext.HttpContext = new DefaultHttpContext();
-            ticketsService.ControllerContext.HttpContext.User = new TestPrincipal(new Claim(ClaimTypes.Email, user.Email));
+            seatsRepository.Setup(s => s.GetAsync(It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(seat);
+
+            var tickets = new TicketsService(timeSlotsService.Object, timeSlotSeatsRepository.Object, usersRepository.Object, seatsRepository.Object);
+
+            var exception = default(Exception);
 
             //Act
-            var result = await ticketsService.PutAsync(timeSlotSeatId, ticket);
+            try
+            {
+                await tickets.AddAsync(1, 1, ticketInputModel, default(string));
+            }
+            catch (Exception e)
+            {
+                exception = e;
+            }
 
             //Assert
-            Assert.IsAssignableFrom<OkResult>(result);
-            Assert.Contains(context.TimeSlotSeats, s => s.Id == timeSlotSeatId && s.Paid && s.Reserved);
+            Assert.IsType<UnauthorizedAccessException>(exception);
+            Assert.NotNull(exception.Message);
+            timeSlotSeatsRepository.Verify(s => s.AddAsync(It.IsAny<TimeSlotSeat>()), Times.Never);
         }
 
         [Fact]
-        public async Task PostTicketSucceeds()
+        public async Task AddAsyncNoSave()
         {
             //Arrange
-            var context = await SetupData(MethodBase.GetCurrentMethod().DeclaringType.GUID.ToString());
+            var ticketInputModel = new TicketInputModel();
+            var user = new Seats4MeUser();
+            var seat = new Seat();
+            var email = "rene@seats4me.com";
+
+            var ticketResult = new TicketResult
+                               {
+                                   TimeSlot = new TimeSlot
+                                              {
+                                                  Show = new Show
+                                                         {
+                                                             Name = "Hamlet"
+                                                         }
+                                              },
+                                   Seat = new Seat(),
+                                   TimeSlotSeat = new TimeSlotSeat()
+                               };
 
             var timeSlotsService = new Mock<ITimeSlotsService>();
-            var ticketsRepository = new Mock<ITimeSlotSeatsRepository>();
-            var seatsRepository = new Mock<ISeatsRepository>();
+            var timeSlotSeatsRepository = new Mock<ITimeSlotSeatsRepository>();
             var usersRepository = new Mock<IUsersRepository>();
-            var ticketsService = new TicketsService(timeSlotsService.Object, ticketsRepository.Object, usersRepository.Object, seatsRepository.Object);
+            var seatsRepository = new Mock<ISeatsRepository>();
 
-            var show = context.Shows.First(s => s.Name.Contains("Woef"));
-            var timeSlot = show.TimeSlots.First();
-            var seat = context.Seats.First(s => s.Row == 1 && s.Chair == 1);
-            var user = context.Seats4MeUsers.First();
+            timeSlotsService.Setup(s => s.GetPriceAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>())).ReturnsAsync(10);
+            timeSlotSeatsRepository.Setup(s => s.AddAsync(It.IsAny<TimeSlotSeat>())).ReturnsAsync(default(TimeSlotSeat));
+            timeSlotSeatsRepository.Setup(s => s.GetAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(default(TimeSlotSeat));
+            timeSlotSeatsRepository.Setup(s => s.GetTicketAsync(It.IsAny<int>())).ReturnsAsync(ticketResult);
 
-            var ticket = new TicketInputModel
-                         {
-                             Row = 1,
-                             Chair = 1,
-                             Discount = false,
-                             Paid = true,
-                             Reserved = true
-                         };
+            usersRepository.Setup(s => s.GetUserAsync(It.IsAny<string>())).ReturnsAsync(user);
+
+            seatsRepository.Setup(s => s.GetAsync(It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(seat);
+
+            var tickets = new TicketsService(timeSlotsService.Object, timeSlotSeatsRepository.Object, usersRepository.Object, seatsRepository.Object);
 
             //Act
-            var result = await ticketsService.AddAsync(showId, timeSlotId, ticket, "test@test.com");
+            var result = await tickets.AddAsync(1, 1, ticketInputModel, email);
 
             //Assert
-            var okResult = Assert.IsAssignableFrom<OkObjectResult>(result);
-            var tickets = Assert.IsAssignableFrom<int>(okResult.Value);
-            Assert.True(tickets > 0);
-            Assert.Contains(context.TimeSlotSeats, s => s.Paid);
+            Assert.Null(result);
+            timeSlotSeatsRepository.Verify(s => s.AddAsync(It.IsAny<TimeSlotSeat>()), Times.Once);
         }
 
         [Fact]
-        public async Task ReserveTicketsSucceeds()
+        public async Task AddAsyncNoSeat()
         {
             //Arrange
+            //Arrange
+            var ticketInputModel = new TicketInputModel();
+            var user = new Seats4MeUser();
+            var email = "rene@seats4me.com";
+
+            var ticket = Mapper.Map<TimeSlotSeat>(ticketInputModel);
+            var ticketResult = new TicketResult
+                               {
+                                   TimeSlot = new TimeSlot
+                                              {
+                                                  Show = new Show
+                                                         {
+                                                             Name = "Hamlet"
+                                                         }
+                                              },
+                                   Seat = new Seat(),
+                                   TimeSlotSeat = new TimeSlotSeat()
+                               };
+
             var timeSlotsService = new Mock<ITimeSlotsService>();
-            var ticketsRepository = new Mock<ITimeSlotSeatsRepository>();
-            var seatsRepository = new Mock<ISeatsRepository>();
+            var timeSlotSeatsRepository = new Mock<ITimeSlotSeatsRepository>();
             var usersRepository = new Mock<IUsersRepository>();
-            var ticketsService = new TicketsService(timeSlotsService.Object, ticketsRepository.Object, usersRepository.Object, seatsRepository.Object);
+            var seatsRepository = new Mock<ISeatsRepository>();
 
-            var show = context.Shows.First();
-            var timeSlot = show.TimeSlots.First();
-            var seat = context.Seats.First(s => s.Row == 1 && s.Chair == 1);
-            var user = context.Seats4MeUsers.First();
+            timeSlotsService.Setup(s => s.GetPriceAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>())).ReturnsAsync(10);
+            timeSlotSeatsRepository.Setup(s => s.AddAsync(It.IsAny<TimeSlotSeat>())).ReturnsAsync(ticket);
+            timeSlotSeatsRepository.Setup(s => s.GetAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(default(TimeSlotSeat));
+            timeSlotSeatsRepository.Setup(s => s.GetTicketAsync(It.IsAny<int>())).ReturnsAsync(ticketResult);
+            usersRepository.Setup(s => s.GetUserAsync(It.IsAny<string>())).ReturnsAsync(user);
 
-            context.TimeSlotSeats.Add(new TimeSlotSeat
-                                      {
-                                          TimeSlotId = timeSlot.Id,
-                                          SeatId = seat.Id,
-                                          Price = show.RegularPrice,
-                                          Seats4MeUserId = user.Id,
-                                          Paid = false,
-                                          Reserved = true
-                                      });
+            seatsRepository.Setup(s => s.GetAsync(It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(default(Seat));
 
-            await context.SaveChangesAsync();
+            var tickets = new TicketsService(timeSlotsService.Object, timeSlotSeatsRepository.Object, usersRepository.Object, seatsRepository.Object);
 
-            ticketsService.ControllerContext.HttpContext = new DefaultHttpContext();
-            ticketsService.ControllerContext.HttpContext.User = new TestPrincipal(new Claim(ClaimTypes.Email, user.Email));
+            var exception = default(Exception);
 
             //Act
-            var result = await ticketsService.GetTicketAsync();
+            try
+            {
+                await tickets.AddAsync(1, 1, ticketInputModel, email);
+            }
+            catch (Exception e)
+            {
+                exception = e;
+            }
 
             //Assert
-            var okResult = Assert.IsAssignableFrom<OkObjectResult>(result);
-            var tickets = Assert.IsAssignableFrom<IEnumerable<TicketOutputModel>>(okResult.Value);
-            Assert.True(tickets.Any());
+            Assert.IsType<ArgumentException>(exception);
+            Assert.NotNull(exception.Message);
+            timeSlotSeatsRepository.Verify(s => s.AddAsync(It.IsAny<TimeSlotSeat>()), Times.Never);
         }
-        */
+
+        [Fact]
+        public async Task AddAsyncNoTicketAvailable()
+        {
+            //Arrange
+            var ticketInputModel = new TicketInputModel();
+            var user = new Seats4MeUser();
+            var seat = new Seat();
+            var email = "rene@seats4me.com";
+
+            var ticket = Mapper.Map<TimeSlotSeat>(ticketInputModel);
+            var ticketResult = new TicketResult
+                               {
+                                   TimeSlot = new TimeSlot
+                                              {
+                                                  Show = new Show
+                                                         {
+                                                             Name = "Hamlet"
+                                                         }
+                                              },
+                                   Seat = new Seat(),
+                                   TimeSlotSeat = new TimeSlotSeat()
+                               };
+
+            var timeSlotsService = new Mock<ITimeSlotsService>();
+            var timeSlotSeatsRepository = new Mock<ITimeSlotSeatsRepository>();
+            var usersRepository = new Mock<IUsersRepository>();
+            var seatsRepository = new Mock<ISeatsRepository>();
+
+            timeSlotsService.Setup(s => s.GetPriceAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>())).ReturnsAsync(10);
+            timeSlotSeatsRepository.Setup(s => s.AddAsync(It.IsAny<TimeSlotSeat>())).ReturnsAsync(ticket);
+            timeSlotSeatsRepository.Setup(s => s.GetAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(ticket);
+            timeSlotSeatsRepository.Setup(s => s.GetTicketAsync(It.IsAny<int>())).ReturnsAsync(ticketResult);
+
+            usersRepository.Setup(s => s.GetUserAsync(It.IsAny<string>())).ReturnsAsync(user);
+
+            seatsRepository.Setup(s => s.GetAsync(It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(seat);
+
+            var tickets = new TicketsService(timeSlotsService.Object, timeSlotSeatsRepository.Object, usersRepository.Object, seatsRepository.Object);
+
+            var exception = default(Exception);
+
+            //Act
+            try
+            {
+                await tickets.AddAsync(1, 1, ticketInputModel, email);
+            }
+            catch (Exception e)
+            {
+                exception = e;
+            }
+
+            //Assert
+            Assert.IsType<ArgumentException>(exception);
+            Assert.NotNull(exception.Message);
+            timeSlotSeatsRepository.Verify(s => s.AddAsync(It.IsAny<TimeSlotSeat>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task AddAsyncOk()
+        {
+            //Arrange
+            var ticketInputModel = new TicketInputModel();
+            var user = new Seats4MeUser();
+            var seat = new Seat();
+            var email = "rene@seats4me.com";
+
+            var ticket = Mapper.Map<TimeSlotSeat>(ticketInputModel);
+            var ticketResult = new TicketResult
+                               {
+                                   TimeSlot = new TimeSlot
+                                              {
+                                                  Show = new Show
+                                                         {
+                                                             Name = "Hamlet"
+                                                         }
+                                              },
+                                   Seat = new Seat(),
+                                   TimeSlotSeat = new TimeSlotSeat()
+                               };
+
+            var timeSlotsService = new Mock<ITimeSlotsService>();
+            var timeSlotSeatsRepository = new Mock<ITimeSlotSeatsRepository>();
+            var usersRepository = new Mock<IUsersRepository>();
+            var seatsRepository = new Mock<ISeatsRepository>();
+
+            timeSlotsService.Setup(s => s.GetPriceAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>())).ReturnsAsync(10);
+            timeSlotSeatsRepository.Setup(s => s.AddAsync(It.IsAny<TimeSlotSeat>())).ReturnsAsync(ticket);
+            timeSlotSeatsRepository.Setup(s => s.GetAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(default(TimeSlotSeat));
+            timeSlotSeatsRepository.Setup(s => s.GetTicketAsync(It.IsAny<int>())).ReturnsAsync(ticketResult);
+            usersRepository.Setup(s => s.GetUserAsync(It.IsAny<string>())).ReturnsAsync(user);
+
+            seatsRepository.Setup(s => s.GetAsync(It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(seat);
+
+            var tickets = new TicketsService(timeSlotsService.Object, timeSlotSeatsRepository.Object, usersRepository.Object, seatsRepository.Object);
+
+            //Act
+            var result = await tickets.AddAsync(1, 1, ticketInputModel, email);
+
+            //Assert
+            Assert.IsType<TicketOutputModel>(result);
+            timeSlotSeatsRepository.Verify(s => s.AddAsync(It.IsAny<TimeSlotSeat>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task DeleteTicketDifferentUser()
+        {
+            //Arrange
+            var ticket = new TimeSlotSeat
+                         {
+                             Id = 1,
+                             Seats4MeUserId = 1
+                         };
+
+            var user = new Seats4MeUser
+                       {
+                           Id = ticket.Seats4MeUserId + 1
+                       };
+
+            var email = "rene@seats4me.com";
+
+            var timeSlotsService = new Mock<ITimeSlotsService>();
+            var timeSlotSeatsRepository = new Mock<ITimeSlotSeatsRepository>();
+            var usersRepository = new Mock<IUsersRepository>();
+            var seatsRepository = new Mock<ISeatsRepository>();
+
+            usersRepository.Setup(s => s.GetUserAsync(It.IsAny<string>())).ReturnsAsync(user);
+
+            timeSlotSeatsRepository.Setup(s => s.GetAsync(It.IsAny<int>())).ReturnsAsync(ticket);
+
+            timeSlotSeatsRepository.Setup(s => s.DeleteAsync(It.IsAny<TimeSlotSeat>())).Returns(Task.CompletedTask);
+
+            var tickets = new TicketsService(timeSlotsService.Object, timeSlotSeatsRepository.Object, usersRepository.Object, seatsRepository.Object);
+
+            var exception = default(Exception);
+
+            //Act
+            try
+            {
+                await tickets.DeleteAsync(1, email);
+
+                //Assert
+            }
+            catch (Exception e)
+            {
+                exception = e;
+            }
+
+            Assert.IsType<UnauthorizedAccessException>(exception);
+            Assert.NotNull(exception.Message);
+            timeSlotSeatsRepository.Verify(s => s.DeleteAsync(It.IsAny<TimeSlotSeat>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task DeleteTicketIncorrectEmail()
+        {
+            //Arrange
+            var ticket = new TimeSlotSeat
+                         {
+                             Id = 1,
+                             Seats4MeUserId = 1
+                         };
+
+            var email = "rene@seats4me.com";
+
+            var timeSlotsService = new Mock<ITimeSlotsService>();
+            var timeSlotSeatsRepository = new Mock<ITimeSlotSeatsRepository>();
+            var usersRepository = new Mock<IUsersRepository>();
+            var seatsRepository = new Mock<ISeatsRepository>();
+
+            usersRepository.Setup(s => s.GetUserAsync(It.IsAny<string>())).ReturnsAsync(default(Seats4MeUser));
+
+            timeSlotSeatsRepository.Setup(s => s.GetAsync(It.IsAny<int>())).ReturnsAsync(ticket);
+
+            timeSlotSeatsRepository.Setup(s => s.DeleteAsync(It.IsAny<TimeSlotSeat>())).Returns(Task.CompletedTask);
+
+            var tickets = new TicketsService(timeSlotsService.Object, timeSlotSeatsRepository.Object, usersRepository.Object, seatsRepository.Object);
+
+            var exception = default(Exception);
+
+            //Act
+            try
+            {
+                await tickets.DeleteAsync(1, email);
+
+                //Assert
+            }
+            catch (Exception e)
+            {
+                exception = e;
+            }
+
+            Assert.IsType<UnauthorizedAccessException>(exception);
+            Assert.NotNull(exception.Message);
+            timeSlotSeatsRepository.Verify(s => s.DeleteAsync(It.IsAny<TimeSlotSeat>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task DeleteTicketNoTicket()
+        {
+            //Arrange
+            var ticket = new TimeSlotSeat
+                         {
+                             Id = 1,
+                             Seats4MeUserId = 1
+                         };
+
+            var user = new Seats4MeUser
+                       {
+                           Id = ticket.Seats4MeUserId
+                       };
+
+            var email = "rene@seats4me.com";
+
+            var timeSlotsService = new Mock<ITimeSlotsService>();
+            var timeSlotSeatsRepository = new Mock<ITimeSlotSeatsRepository>();
+            var usersRepository = new Mock<IUsersRepository>();
+            var seatsRepository = new Mock<ISeatsRepository>();
+
+            usersRepository.Setup(s => s.GetUserAsync(It.IsAny<string>())).ReturnsAsync(user);
+
+            timeSlotSeatsRepository.Setup(s => s.GetAsync(It.IsAny<int>())).ReturnsAsync(default(TimeSlotSeat));
+
+            timeSlotSeatsRepository.Setup(s => s.DeleteAsync(It.IsAny<TimeSlotSeat>())).Returns(Task.CompletedTask);
+
+            var tickets = new TicketsService(timeSlotsService.Object, timeSlotSeatsRepository.Object, usersRepository.Object, seatsRepository.Object);
+
+            //Act
+            await tickets.DeleteAsync(1, email);
+
+            //Assert
+            timeSlotSeatsRepository.Verify(s => s.DeleteAsync(It.IsAny<TimeSlotSeat>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task DeleteTicketSucceeds()
+        {
+            //Arrange
+            var ticket = new TimeSlotSeat
+                         {
+                             Id = 1,
+                             Seats4MeUserId = 1
+                         };
+
+            var user = new Seats4MeUser
+                       {
+                           Id = ticket.Seats4MeUserId
+                       };
+
+            var email = "rene@seats4me.com";
+
+            var timeSlotsService = new Mock<ITimeSlotsService>();
+            var timeSlotSeatsRepository = new Mock<ITimeSlotSeatsRepository>();
+            var usersRepository = new Mock<IUsersRepository>();
+            var seatsRepository = new Mock<ISeatsRepository>();
+
+            usersRepository.Setup(s => s.GetUserAsync(It.IsAny<string>())).ReturnsAsync(user);
+
+            timeSlotSeatsRepository.Setup(s => s.GetAsync(It.IsAny<int>())).ReturnsAsync(ticket);
+
+            timeSlotSeatsRepository.Setup(s => s.DeleteAsync(It.IsAny<TimeSlotSeat>())).Returns(Task.CompletedTask);
+
+            var tickets = new TicketsService(timeSlotsService.Object, timeSlotSeatsRepository.Object, usersRepository.Object, seatsRepository.Object);
+
+            //Act
+            await tickets.DeleteAsync(1, email);
+
+            //Assert
+            timeSlotSeatsRepository.Verify(s => s.DeleteAsync(It.IsAny<TimeSlotSeat>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetAsyncByTimeslotListSucceeds()
+        {
+            //Arrange
+            var ticketModels = new List<TicketResult>
+                               {
+                                   new TicketResult(),
+                                   new TicketResult()
+                               };
+
+            var timeSlotsService = new Mock<ITimeSlotsService>();
+            var timeSlotSeatsRepository = new Mock<ITimeSlotSeatsRepository>();
+            var usersRepository = new Mock<IUsersRepository>();
+            var seatsRepository = new Mock<ISeatsRepository>();
+
+            timeSlotSeatsRepository.Setup(s => s.GetTicketsByTimeSlotAsync(It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(ticketModels);
+
+            var tickets = new TicketsService(timeSlotsService.Object, timeSlotSeatsRepository.Object, usersRepository.Object, seatsRepository.Object);
+
+            //Act
+            var result = await tickets.GetTicketsByTimeSlotAsync(1, 1);
+
+            //Assert
+            var listTickets = Assert.IsAssignableFrom<IEnumerable<TicketOutputModel>>(result);
+            Assert.Equal(2, listTickets.Count());
+            timeSlotSeatsRepository.Verify(s => s.GetTicketsByTimeSlotAsync(It.IsAny<int>(), It.IsAny<int>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetAsyncByUserListSucceeds()
+        {
+            //Arrange
+            var email = "rene@seats4me.com";
+            var user = new Seats4MeUser();
+
+            var ticketModels = new List<TicketResult>
+                               {
+                                   new TicketResult
+                                   {
+                                       TimeSlot = new TimeSlot
+                                                  {
+                                                      Show = new Show
+                                                             {
+                                                                 Name = "Hamlet"
+                                                             }
+                                                  },
+                                       Seat = new Seat(),
+                                       TimeSlotSeat = new TimeSlotSeat()
+                                   },
+                                   new TicketResult
+                                   {
+                                       TimeSlot = new TimeSlot
+                                                  {
+                                                      Show = new Show
+                                                             {
+                                                                 Name = "Hamlet vs Hamlet"
+                                                             }
+                                                  },
+                                       Seat = new Seat(),
+                                       TimeSlotSeat = new TimeSlotSeat()
+                                   }
+                               };
+
+            var timeSlotsService = new Mock<ITimeSlotsService>();
+            var timeSlotSeatsRepository = new Mock<ITimeSlotSeatsRepository>();
+            var usersRepository = new Mock<IUsersRepository>();
+            var seatsRepository = new Mock<ISeatsRepository>();
+
+            timeSlotSeatsRepository.Setup(s => s.GetTicketsByUserAsync(It.IsAny<int>())).ReturnsAsync(ticketModels);
+            usersRepository.Setup(s => s.GetUserAsync(It.IsAny<string>())).ReturnsAsync(user);
+            var tickets = new TicketsService(timeSlotsService.Object, timeSlotSeatsRepository.Object, usersRepository.Object, seatsRepository.Object);
+
+            //Act
+            var result = await tickets.GetTicketsByUserAsync(email);
+
+            //Assert
+            var listTickets = Assert.IsAssignableFrom<IEnumerable<TicketOutputModel>>(result);
+            Assert.Equal(2, listTickets.Count());
+            timeSlotSeatsRepository.Verify(s => s.GetTicketsByUserAsync(It.IsAny<int>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetAsyncSucceeds()
+        {
+            //Arrange
+            var ticket = new TicketResult
+                         {
+                             TimeSlot = new TimeSlot
+                                        {
+                                            Show = new Show
+                                                   {
+                                                       Name = "Hamlet"
+                                                   }
+                                        },
+                             Seat = new Seat(),
+                             TimeSlotSeat = new TimeSlotSeat()
+                         };
+
+            var timeSlotsService = new Mock<ITimeSlotsService>();
+            var timeSlotSeatsRepository = new Mock<ITimeSlotSeatsRepository>();
+            var usersRepository = new Mock<IUsersRepository>();
+            var seatsRepository = new Mock<ISeatsRepository>();
+            timeSlotSeatsRepository.Setup(s => s.GetTicketAsync(It.IsAny<int>())).ReturnsAsync(ticket);
+
+            var tickets = new TicketsService(timeSlotsService.Object, timeSlotSeatsRepository.Object, usersRepository.Object, seatsRepository.Object);
+
+            //Act
+            var result = await tickets.GetTicketAsync(1);
+
+            //Assert
+            var ticketModel = Assert.IsType<TicketOutputModel>(result);
+            Assert.Equal("Hamlet", ticketModel.Name);
+            timeSlotSeatsRepository.Verify(s => s.GetTicketAsync(It.IsAny<int>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task UpdateAsyncDifferentUser()
+        {
+            //Arrange
+            var ticket = new TimeSlotSeat
+                         {
+                             Id = 1,
+                             Seats4MeUserId = 1,
+                             Price = 0,
+                             TimeSlot = new TimeSlot()
+                         };
+
+            var ticketInputModel = new TicketInputModel();
+            var ticketResult = new TicketResult
+                               {
+                                   TimeSlot = new TimeSlot
+                                              {
+                                                  Show = new Show
+                                                         {
+                                                             Name = "Hamlet"
+                                                         }
+                                              },
+                                   Seat = new Seat(),
+                                   TimeSlotSeat = new TimeSlotSeat()
+                               };
+
+            var user = new Seats4MeUser
+                       {
+                           Id = ticket.Seats4MeUserId + 1
+                       };
+
+            var email = "rene@seats4me.com";
+            var seat = new Seat();
+
+            var timeSlotsService = new Mock<ITimeSlotsService>();
+            var timeSlotSeatsRepository = new Mock<ITimeSlotSeatsRepository>();
+            var usersRepository = new Mock<IUsersRepository>();
+            var seatsRepository = new Mock<ISeatsRepository>();
+
+            timeSlotsService.Setup(s => s.GetPriceAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>())).ReturnsAsync(10);
+            timeSlotSeatsRepository.Setup(s => s.UpdateAsync(It.IsAny<TimeSlotSeat>())).ReturnsAsync(ticket);
+            timeSlotSeatsRepository.Setup(s => s.GetAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(default(TimeSlotSeat));
+            timeSlotSeatsRepository.Setup(s => s.GetAsync(It.IsAny<int>())).ReturnsAsync(ticket);
+
+            timeSlotSeatsRepository.Setup(s => s.GetTicketAsync(It.IsAny<int>())).ReturnsAsync(ticketResult);
+
+            usersRepository.Setup(s => s.GetUserAsync(It.IsAny<string>())).ReturnsAsync(user);
+
+            seatsRepository.Setup(s => s.GetAsync(It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(seat);
+
+            var tickets = new TicketsService(timeSlotsService.Object, timeSlotSeatsRepository.Object, usersRepository.Object, seatsRepository.Object);
+
+            var exception = default(Exception);
+
+            try
+            {
+                await tickets.UpdateAsync(1, ticketInputModel, email);
+            }
+            catch (Exception e)
+            {
+                exception = e;
+            }
+
+            Assert.IsType<UnauthorizedAccessException>(exception);
+            Assert.NotNull(exception.Message);
+            timeSlotSeatsRepository.Verify(s => s.UpdateAsync(It.IsAny<TimeSlotSeat>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task UpdateAsyncInvalidUser()
+        {
+            //Arrange
+            var ticket = new TimeSlotSeat
+                         {
+                             Id = 1,
+                             Seats4MeUserId = 1,
+                             Price = 0,
+                             TimeSlot = new TimeSlot()
+                         };
+
+            var ticketInputModel = new TicketInputModel();
+            var ticketResult = new TicketResult
+                               {
+                                   TimeSlot = new TimeSlot
+                                              {
+                                                  Show = new Show
+                                                         {
+                                                             Name = "Hamlet"
+                                                         }
+                                              },
+                                   Seat = new Seat(),
+                                   TimeSlotSeat = new TimeSlotSeat()
+                               };
+
+            var email = "rene@seats4me.com";
+            var seat = new Seat();
+
+            var timeSlotsService = new Mock<ITimeSlotsService>();
+            var timeSlotSeatsRepository = new Mock<ITimeSlotSeatsRepository>();
+            var usersRepository = new Mock<IUsersRepository>();
+            var seatsRepository = new Mock<ISeatsRepository>();
+
+            timeSlotsService.Setup(s => s.GetPriceAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>())).ReturnsAsync(10);
+            timeSlotSeatsRepository.Setup(s => s.UpdateAsync(It.IsAny<TimeSlotSeat>())).ReturnsAsync(ticket);
+            timeSlotSeatsRepository.Setup(s => s.GetAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(default(TimeSlotSeat));
+            timeSlotSeatsRepository.Setup(s => s.GetAsync(It.IsAny<int>())).ReturnsAsync(ticket);
+
+            timeSlotSeatsRepository.Setup(s => s.GetTicketAsync(It.IsAny<int>())).ReturnsAsync(ticketResult);
+
+            usersRepository.Setup(s => s.GetUserAsync(It.IsAny<string>())).ReturnsAsync(default(Seats4MeUser));
+
+            seatsRepository.Setup(s => s.GetAsync(It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(seat);
+
+            var tickets = new TicketsService(timeSlotsService.Object, timeSlotSeatsRepository.Object, usersRepository.Object, seatsRepository.Object);
+
+            var exception = default(Exception);
+
+            try
+            {
+                await tickets.UpdateAsync(1, ticketInputModel, email);
+            }
+            catch (Exception e)
+            {
+                exception = e;
+            }
+
+            Assert.IsType<UnauthorizedAccessException>(exception);
+            Assert.NotNull(exception.Message);
+            timeSlotSeatsRepository.Verify(s => s.UpdateAsync(It.IsAny<TimeSlotSeat>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task UpdateAsyncNoAvailableTicket()
+        {
+            //Arrange
+            var ticket = new TimeSlotSeat
+                         {
+                             Id = 1,
+                             Seats4MeUserId = 1,
+                             Price = 0,
+                             TimeSlot = new TimeSlot()
+                         };
+
+            var ticketInputModel = new TicketInputModel();
+            var ticketResult = new TicketResult
+                               {
+                                   TimeSlot = new TimeSlot
+                                              {
+                                                  Show = new Show
+                                                         {
+                                                             Name = "Hamlet"
+                                                         }
+                                              },
+                                   Seat = new Seat(),
+                                   TimeSlotSeat = new TimeSlotSeat()
+                               };
+
+            var user = new Seats4MeUser
+                       {
+                           Id = ticket.Seats4MeUserId
+                       };
+
+            var email = "rene@seats4me.com";
+            var seat = new Seat();
+
+            var timeSlotsService = new Mock<ITimeSlotsService>();
+            var timeSlotSeatsRepository = new Mock<ITimeSlotSeatsRepository>();
+            var usersRepository = new Mock<IUsersRepository>();
+            var seatsRepository = new Mock<ISeatsRepository>();
+
+            timeSlotsService.Setup(s => s.GetPriceAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>())).ReturnsAsync(10);
+            timeSlotSeatsRepository.Setup(s => s.UpdateAsync(It.IsAny<TimeSlotSeat>())).ReturnsAsync(ticket);
+            timeSlotSeatsRepository.Setup(s => s.GetAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(ticket);
+            timeSlotSeatsRepository.Setup(s => s.GetAsync(It.IsAny<int>())).ReturnsAsync(ticket);
+
+            timeSlotSeatsRepository.Setup(s => s.GetTicketAsync(It.IsAny<int>())).ReturnsAsync(ticketResult);
+
+            usersRepository.Setup(s => s.GetUserAsync(It.IsAny<string>())).ReturnsAsync(user);
+
+            seatsRepository.Setup(s => s.GetAsync(It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(seat);
+
+            var tickets = new TicketsService(timeSlotsService.Object, timeSlotSeatsRepository.Object, usersRepository.Object, seatsRepository.Object);
+
+            var exception = default(Exception);
+
+            try
+            {
+                await tickets.UpdateAsync(1, ticketInputModel, email);
+            }
+            catch (Exception e)
+            {
+                exception = e;
+            }
+
+            Assert.IsType<ArgumentException>(exception);
+            Assert.NotNull(exception.Message);
+            timeSlotSeatsRepository.Verify(s => s.UpdateAsync(It.IsAny<TimeSlotSeat>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task UpdateAsyncNoSave()
+        {
+            //Arrange
+            var ticket = new TimeSlotSeat
+                         {
+                             Id = 1,
+                             Seats4MeUserId = 1,
+                             Price = 0,
+                             TimeSlot = new TimeSlot()
+                         };
+
+            var ticketInputModel = new TicketInputModel();
+            var ticketResult = new TicketResult
+                               {
+                                   TimeSlot = new TimeSlot
+                                              {
+                                                  Show = new Show
+                                                         {
+                                                             Name = "Hamlet"
+                                                         }
+                                              },
+                                   Seat = new Seat(),
+                                   TimeSlotSeat = new TimeSlotSeat()
+                               };
+
+            var user = new Seats4MeUser
+                       {
+                           Id = ticket.Seats4MeUserId
+                       };
+
+            var email = "rene@seats4me.com";
+            var seat = new Seat();
+
+            var timeSlotsService = new Mock<ITimeSlotsService>();
+            var timeSlotSeatsRepository = new Mock<ITimeSlotSeatsRepository>();
+            var usersRepository = new Mock<IUsersRepository>();
+            var seatsRepository = new Mock<ISeatsRepository>();
+
+            timeSlotsService.Setup(s => s.GetPriceAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>())).ReturnsAsync(10);
+            timeSlotSeatsRepository.Setup(s => s.UpdateAsync(It.IsAny<TimeSlotSeat>())).ReturnsAsync(default(TimeSlotSeat));
+            timeSlotSeatsRepository.Setup(s => s.GetAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(default(TimeSlotSeat));
+            timeSlotSeatsRepository.Setup(s => s.GetAsync(It.IsAny<int>())).ReturnsAsync(ticket);
+            timeSlotSeatsRepository.Setup(s => s.GetTicketAsync(It.IsAny<int>())).ReturnsAsync(ticketResult);
+
+            usersRepository.Setup(s => s.GetUserAsync(It.IsAny<string>())).ReturnsAsync(user);
+
+            seatsRepository.Setup(s => s.GetAsync(It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(seat);
+
+            var tickets = new TicketsService(timeSlotsService.Object, timeSlotSeatsRepository.Object, usersRepository.Object, seatsRepository.Object);
+
+            var result = await tickets.UpdateAsync(1, ticketInputModel, email);
+
+            Assert.Null(result);
+            timeSlotSeatsRepository.Verify(s => s.UpdateAsync(It.IsAny<TimeSlotSeat>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task UpdateAsyncNoSeat()
+        {
+            //Arrange
+            var ticket = new TimeSlotSeat
+                         {
+                             Id = 1,
+                             Seats4MeUserId = 1,
+                             Price = 0,
+                             TimeSlot = new TimeSlot()
+                         };
+
+            var ticketInputModel = new TicketInputModel();
+            var ticketResult = new TicketResult
+                               {
+                                   TimeSlot = new TimeSlot
+                                              {
+                                                  Show = new Show
+                                                         {
+                                                             Name = "Hamlet"
+                                                         }
+                                              },
+                                   Seat = new Seat(),
+                                   TimeSlotSeat = new TimeSlotSeat()
+                               };
+
+            var user = new Seats4MeUser
+                       {
+                           Id = ticket.Seats4MeUserId
+                       };
+
+            var email = "rene@seats4me.com";
+
+            var timeSlotsService = new Mock<ITimeSlotsService>();
+            var timeSlotSeatsRepository = new Mock<ITimeSlotSeatsRepository>();
+            var usersRepository = new Mock<IUsersRepository>();
+            var seatsRepository = new Mock<ISeatsRepository>();
+
+            timeSlotsService.Setup(s => s.GetPriceAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>())).ReturnsAsync(10);
+            timeSlotSeatsRepository.Setup(s => s.UpdateAsync(It.IsAny<TimeSlotSeat>())).ReturnsAsync(ticket);
+            timeSlotSeatsRepository.Setup(s => s.GetAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(default(TimeSlotSeat));
+            timeSlotSeatsRepository.Setup(s => s.GetAsync(It.IsAny<int>())).ReturnsAsync(ticket);
+            timeSlotSeatsRepository.Setup(s => s.GetTicketAsync(It.IsAny<int>())).ReturnsAsync(ticketResult);
+
+            usersRepository.Setup(s => s.GetUserAsync(It.IsAny<string>())).ReturnsAsync(user);
+
+            seatsRepository.Setup(s => s.GetAsync(It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(default(Seat));
+
+            var tickets = new TicketsService(timeSlotsService.Object, timeSlotSeatsRepository.Object, usersRepository.Object, seatsRepository.Object);
+
+            var exception = default(Exception);
+
+            try
+            {
+                await tickets.UpdateAsync(1, ticketInputModel, email);
+            }
+            catch (Exception e)
+            {
+                exception = e;
+            }
+
+            Assert.IsType<ArgumentException>(exception);
+            Assert.NotNull(exception.Message);
+            timeSlotSeatsRepository.Verify(s => s.UpdateAsync(It.IsAny<TimeSlotSeat>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task UpdateAsyncNoTicket()
+        {
+            //Arrange
+            var ticket = new TimeSlotSeat
+                         {
+                             Id = 1,
+                             Seats4MeUserId = 1,
+                             Price = 0,
+                             TimeSlot = new TimeSlot()
+                         };
+
+            var ticketInputModel = new TicketInputModel();
+            var ticketResult = new TicketResult
+                               {
+                                   TimeSlot = new TimeSlot
+                                              {
+                                                  Show = new Show
+                                                         {
+                                                             Name = "Hamlet"
+                                                         }
+                                              },
+                                   Seat = new Seat(),
+                                   TimeSlotSeat = new TimeSlotSeat()
+                               };
+
+            var user = new Seats4MeUser
+                       {
+                           Id = ticket.Seats4MeUserId + 1
+                       };
+
+            var email = "rene@seats4me.com";
+            var seat = new Seat();
+
+            var timeSlotsService = new Mock<ITimeSlotsService>();
+            var timeSlotSeatsRepository = new Mock<ITimeSlotSeatsRepository>();
+            var usersRepository = new Mock<IUsersRepository>();
+            var seatsRepository = new Mock<ISeatsRepository>();
+
+            timeSlotsService.Setup(s => s.GetPriceAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>())).ReturnsAsync(10);
+            timeSlotSeatsRepository.Setup(s => s.UpdateAsync(It.IsAny<TimeSlotSeat>())).ReturnsAsync(ticket);
+            timeSlotSeatsRepository.Setup(s => s.GetAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(default(TimeSlotSeat));
+            timeSlotSeatsRepository.Setup(s => s.GetAsync(It.IsAny<int>())).ReturnsAsync(default(TimeSlotSeat));
+            timeSlotSeatsRepository.Setup(s => s.GetTicketAsync(It.IsAny<int>())).ReturnsAsync(ticketResult);
+
+            usersRepository.Setup(s => s.GetUserAsync(It.IsAny<string>())).ReturnsAsync(user);
+
+            seatsRepository.Setup(s => s.GetAsync(It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(seat);
+
+            var tickets = new TicketsService(timeSlotsService.Object, timeSlotSeatsRepository.Object, usersRepository.Object, seatsRepository.Object);
+
+            var exception = default(Exception);
+
+            try
+            {
+                await tickets.UpdateAsync(1, ticketInputModel, email);
+            }
+            catch (Exception e)
+            {
+                exception = e;
+            }
+
+            Assert.IsType<ArgumentException>(exception);
+            Assert.NotNull(exception.Message);
+            timeSlotSeatsRepository.Verify(s => s.UpdateAsync(It.IsAny<TimeSlotSeat>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task UpdateAsyncSucceeds()
+        {
+            //Arrange
+            var ticket = new TimeSlotSeat
+                         {
+                             Id = 1,
+                             Seats4MeUserId = 1,
+                             Price = 0,
+                             TimeSlot = new TimeSlot()
+                         };
+
+            var ticketInputModel = new TicketInputModel();
+            var ticketResult = new TicketResult
+                               {
+                                   TimeSlot = new TimeSlot
+                                              {
+                                                  Show = new Show
+                                                         {
+                                                             Name = "Hamlet"
+                                                         }
+                                              },
+                                   Seat = new Seat(),
+                                   TimeSlotSeat = new TimeSlotSeat()
+                               };
+
+            var user = new Seats4MeUser
+                       {
+                           Id = ticket.Seats4MeUserId
+                       };
+
+            var email = "rene@seats4me.com";
+            var seat = new Seat();
+
+            var timeSlotsService = new Mock<ITimeSlotsService>();
+            var timeSlotSeatsRepository = new Mock<ITimeSlotSeatsRepository>();
+            var usersRepository = new Mock<IUsersRepository>();
+            var seatsRepository = new Mock<ISeatsRepository>();
+
+            timeSlotsService.Setup(s => s.GetPriceAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>())).ReturnsAsync(10);
+            timeSlotSeatsRepository.Setup(s => s.UpdateAsync(It.IsAny<TimeSlotSeat>())).ReturnsAsync(ticket);
+            timeSlotSeatsRepository.Setup(s => s.GetAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(default(TimeSlotSeat));
+            timeSlotSeatsRepository.Setup(s => s.GetAsync(It.IsAny<int>())).ReturnsAsync(ticket);
+            timeSlotSeatsRepository.Setup(s => s.GetTicketAsync(It.IsAny<int>())).ReturnsAsync(ticketResult);
+
+            usersRepository.Setup(s => s.GetUserAsync(It.IsAny<string>())).ReturnsAsync(user);
+
+            seatsRepository.Setup(s => s.GetAsync(It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(seat);
+
+            var tickets = new TicketsService(timeSlotsService.Object, timeSlotSeatsRepository.Object, usersRepository.Object, seatsRepository.Object);
+
+            var result = await tickets.UpdateAsync(1, ticketInputModel, email);
+
+            Assert.IsType<TicketOutputModel>(result);
+            timeSlotSeatsRepository.Verify(s => s.UpdateAsync(It.IsAny<TimeSlotSeat>()), Times.Once);
+        }
     }
 }

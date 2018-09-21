@@ -108,33 +108,6 @@ namespace Seats4Me.API
                                                             };
                     });
 
-            /*
-            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-                .AddCookie(options =>
-                {
-                    options.Events.OnRedirectToLogin += OnRedirectToLogin,
-                    options.LoginPath = "/Account/LogIn";
-                    options.LogoutPath = "/Account/LogOff";
-                });
-                */
-            /*
-            var builder = services.AddIdentityCore<Seats4MeUser>(opt =>
-                {
-                    opt.Password.RequireDigit = true;
-                    opt.Password.RequiredLength = 8;
-                    opt.Password.RequireNonAlphanumeric = false;
-                    opt.Password.RequireUppercase = true;
-                    opt.Password.RequireLowercase = true;
-                }
-            );
-            builder = new IdentityBuilder(builder.UserType, typeof(IdentityRole), builder.Services);
-            builder
-
-            builder.AddRoleValidator<RoleValidator<IdentityRole>>();
-            builder.AddRoleManager<RoleManager<IdentityRole>>();
-            builder.AddSignInManager<SignInManager<IdentityUser>>();
-            */
-
             services.AddAuthorization(cfg =>
             {
                 cfg.AddPolicy("Owner", p => p.RequireClaim("Owner", "True"));
@@ -203,7 +176,7 @@ namespace Seats4Me.API
                                                {
                                                    Email = "rene@seats4me.com",
                                                    Name = "René",
-                                                   Roles = "contributor,customer",
+                                                   Roles = "contributor",
                                                    Password = "password"
                                                },
                                                new Seats4MeUser

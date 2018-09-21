@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using AutoMapper;
@@ -43,7 +44,7 @@ namespace Seats4Me.API.Services
 
         public async Task<bool> ExistsAsync(int showId, int id)
         {
-            return await _timeSlotsRepository.GetAsync(id) != null;
+            return await _timeSlotsRepository.GetAsync(showId, id) != null;
         }
 
         public async Task<List<TimeSlotOutputModel>> GetAsync(int showId)
@@ -57,12 +58,19 @@ namespace Seats4Me.API.Services
         {
             var timeSlot = await _timeSlotsRepository.GetAsync(showId, id);
 
-            return Mapper.Map<TimeSlotOutputModel>(timeSlot);
+            return timeSlot == null
+                       ? null
+                       : Mapper.Map<TimeSlotOutputModel>(timeSlot);
         }
 
         public async Task<decimal> GetPriceAsync(int showId, int id, bool discount)
         {
             var timeSlot = await _timeSlotsRepository.GetAsync(showId, id);
+
+            if (timeSlot == null)
+            {
+                throw new ArgumentException($"Timeslot {id} not found");
+            }
 
             return timeSlot.PromoPrice > 0 ? timeSlot.PromoPrice : timeSlot.Show.RegularDiscountPrice > 0 && discount ? timeSlot.Show.RegularDiscountPrice : timeSlot.Show.RegularPrice;
         }

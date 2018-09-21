@@ -2,9 +2,6 @@
 using System.Reflection;
 using System.Threading.Tasks;
 
-using AutoMapper;
-
-using Seats4Me.API.Models;
 using Seats4Me.API.Repositories;
 using Seats4Me.Data.Model;
 
@@ -12,18 +9,12 @@ using Xunit;
 
 namespace Seats4Me.API.Tests.Repositories
 {
-    public class TimeSlotSeatsRepositoryTests
+    public class TimeSlotSeatsRepositoryTests : MapperTest
     {
-        private void Setup()
-        {
-            Mapper.Reset();
-            Mapper.Initialize(cfg => cfg.AddProfile(new Seats4MeProfile()));
-        }
-
         [Fact]
         public async Task AddAsyncSucceeds()
         {
-            Setup();
+            //Arrange
             var context = TheatreContextInit.InitializeContextInMemoryDb(MethodBase.GetCurrentMethod().DeclaringType.GUID.ToString());
 
             var timeSlotSeatsRepository = new TimeSlotSeatsRepository(context);
@@ -44,7 +35,7 @@ namespace Seats4Me.API.Tests.Repositories
         [Fact]
         public async Task DeleteAsyncSucceeds()
         {
-            Setup();
+            //Arrange
             var context = TheatreContextInit.InitializeContextInMemoryDb(MethodBase.GetCurrentMethod().DeclaringType.GUID.ToString());
 
             var timeSlotSeatsRepository = new TimeSlotSeatsRepository(context);
@@ -68,7 +59,6 @@ namespace Seats4Me.API.Tests.Repositories
         public async Task GetAsyncByIdSucceeds()
         {
             //Arrange
-            Setup();
             var context = TheatreContextInit.InitializeContextInMemoryDb(MethodBase.GetCurrentMethod().DeclaringType.GUID.ToString());
             var timeSlotSeatEntity = context.TimeSlotSeats.Add(new TimeSlotSeat
                                                                {
@@ -90,7 +80,6 @@ namespace Seats4Me.API.Tests.Repositories
         public async Task GetAsyncBySeatSucceeds()
         {
             //Arrange
-            Setup();
             var context = TheatreContextInit.InitializeContextInMemoryDb(MethodBase.GetCurrentMethod().DeclaringType.GUID.ToString());
             context.TimeSlotSeats.Add(new TimeSlotSeat
                                       {
@@ -115,47 +104,9 @@ namespace Seats4Me.API.Tests.Repositories
         }
 
         [Fact]
-        public async Task GetTicketAsyncByIdSucceeds()
-        {
-            //Arrange
-            Setup();
-            var context = TheatreContextInit.InitializeContextInMemoryDb(MethodBase.GetCurrentMethod().DeclaringType.GUID.ToString());
-            context.TimeSlotSeats.Add(new TimeSlotSeat
-                                      {
-                                          Seat = new Seat
-                                                 {
-                                                     Row = 1,
-                                                     Chair = 1
-                                                 },
-                                          TimeSlot = new TimeSlot
-                                                     {
-                                                         Id = 1,
-                                                         Show = new Show()
-                                                                {
-                                                                    Id = 1
-                                                                }
-                                          },
-                                          Id = 1,
-                                          Price = 12,
-                                          Paid = true
-                                      });
-
-            await context.SaveChangesAsync();
-            var timeSlotSeatsRepository = new TimeSlotSeatsRepository(context);
-
-            //Act
-            var timeSlotSeat = await timeSlotSeatsRepository.GetTicketAsync(1);
-
-            //Assert
-            Assert.NotNull(timeSlotSeat);
-            Assert.True(timeSlotSeat.TimeSlotSeat.Paid);
-        }
-
-        [Fact]
         public async Task GetAsyncBySlotSucceeds()
         {
             //Arrange
-            Setup();
             var context = TheatreContextInit.InitializeContextInMemoryDb(MethodBase.GetCurrentMethod().DeclaringType.GUID.ToString());
             context.TimeSlotSeats.Add(new TimeSlotSeat
                                       {
@@ -167,11 +118,11 @@ namespace Seats4Me.API.Tests.Repositories
                                           TimeSlot = new TimeSlot
                                                      {
                                                          Id = 1,
-                                                         Show = new Show()
+                                                         Show = new Show
                                                                 {
                                                                     Id = 1
                                                                 }
-                                          },
+                                                     },
 
                                           Price = 12,
                                           Paid = true
@@ -192,7 +143,6 @@ namespace Seats4Me.API.Tests.Repositories
         public async Task GetAsyncByUserSucceeds()
         {
             //Arrange
-            Setup();
             var context = TheatreContextInit.InitializeContextInMemoryDb(MethodBase.GetCurrentMethod().DeclaringType.GUID.ToString());
             context.TimeSlotSeats.Add(new TimeSlotSeat
                                       {
@@ -204,7 +154,7 @@ namespace Seats4Me.API.Tests.Repositories
                                           TimeSlot = new TimeSlot
                                                      {
                                                          Id = 1,
-                                                         Show = new Show()
+                                                         Show = new Show
                                                                 {
                                                                     Id = 1
                                                                 }
@@ -226,9 +176,45 @@ namespace Seats4Me.API.Tests.Repositories
         }
 
         [Fact]
+        public async Task GetTicketAsyncByIdSucceeds()
+        {
+            //Arrange
+            var context = TheatreContextInit.InitializeContextInMemoryDb(MethodBase.GetCurrentMethod().DeclaringType.GUID.ToString());
+            context.TimeSlotSeats.Add(new TimeSlotSeat
+                                      {
+                                          Seat = new Seat
+                                                 {
+                                                     Row = 1,
+                                                     Chair = 1
+                                                 },
+                                          TimeSlot = new TimeSlot
+                                                     {
+                                                         Id = 1,
+                                                         Show = new Show
+                                                                {
+                                                                    Id = 1
+                                                                }
+                                                     },
+                                          Id = 1,
+                                          Price = 12,
+                                          Paid = true
+                                      });
+
+            await context.SaveChangesAsync();
+            var timeSlotSeatsRepository = new TimeSlotSeatsRepository(context);
+
+            //Act
+            var timeSlotSeat = await timeSlotSeatsRepository.GetTicketAsync(1);
+
+            //Assert
+            Assert.NotNull(timeSlotSeat);
+            Assert.True(timeSlotSeat.TimeSlotSeat.Paid);
+        }
+
+        [Fact]
         public async Task UpdateAsyncSucceeds()
         {
-            Setup();
+            //Arrange
             var context = TheatreContextInit.InitializeContextInMemoryDb(MethodBase.GetCurrentMethod().DeclaringType.GUID.ToString());
 
             var timeSlotSeatsRepository = new TimeSlotSeatsRepository(context);

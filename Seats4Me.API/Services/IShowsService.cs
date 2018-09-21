@@ -19,8 +19,8 @@ namespace Seats4Me.API.Services
 
         Task<ShowOutputModel> GetAsync(int id);
 
-        Task<ShowOutputModel> UpdateAsync(int id, ShowInputModel showInput);
-
         Task<string> GetExportAsync();
+
+        Task<ShowOutputModel> UpdateAsync(int id, ShowInputModel showInput);
     }
 }
